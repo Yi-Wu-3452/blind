@@ -1,0 +1,15 @@
+# Dependencies
+node_modules/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+
+# Generated data files (keeping nvidia_urls.txt if it's the main reference)
+nvidia_urls_*.txt
