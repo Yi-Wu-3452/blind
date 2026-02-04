@@ -11,5 +11,17 @@ yarn-error.log*
 # OS files
 .DS_Store
 
-# Generated data files (keeping nvidia_urls.txt if it's the main reference)
-nvidia_urls_*.txt
+# Data files
+data/nvidia_urls_*.txt
+data/nvidia_posts_data.json
+data/posts_greedy/
+data/posts_greedy copy/
+* copy/
+* copy
+
+# Reports
+*report.md
+
+# Debug and Temp
+debug_output.json
+debug_extraction.log

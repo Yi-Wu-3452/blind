@@ -1,0 +1,27 @@
+What we need:
+
+
+Post:
+
+User Name
+User’s company
+Post Date (year/month/day)
+Channel
+Post_Title
+Post_Contents
+# likes
+# view
+# comments
+Optional
+Check if times
+Visual (vote, emoji)?
+
+
+Reply:
+
+User name
+User’s company
+Post Date (year/month/day)
+Contents
+Chain of reply
+# likes
