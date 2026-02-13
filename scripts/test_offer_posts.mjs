@@ -29,7 +29,7 @@ async function login(page) {
 }
 
 async function extractWidgetOnly(page, url) {
-    console.log(`Testing post type/widget for: ${url}`);
+    console.log(`Testing: ${url}`);
     await page.goto(url, { waitUntil: "networkidle", timeout: 60000 });
 
     // Click View Result if present
@@ -85,10 +85,7 @@ async function extractWidgetOnly(page, url) {
             }
 
             if (post_type === "poll") {
-                // Try multiple patterns for poll rows
                 let optionRows = Array.from(pollContainer.querySelectorAll('div.relative.mb-3, div.relative'));
-
-                // Filter rows that actually look like poll options (text + percentage)
                 optionRows = optionRows.filter(row => row.textContent?.includes('%'));
 
                 optionRows.forEach((row) => {
@@ -115,9 +112,7 @@ async function extractWidgetOnly(page, url) {
                     const role = block.querySelector('.text-sm.font-semibold')?.textContent?.trim() || "";
                     const level = block.querySelector('.text-xs.text-gray-600')?.textContent?.trim() || "";
 
-                    // Helper to extract text value for a label
                     const extractField = (label) => {
-                        // 1. Try finding it as a prefix (Inline value) like "TC: $550K"
                         const prefixNodes = Array.from(block.querySelectorAll('div, span')).filter(el =>
                             el.textContent?.trim().startsWith(label) && el.children.length === 0
                         );
@@ -125,10 +120,8 @@ async function extractWidgetOnly(page, url) {
                             return prefixNodes[0].textContent.replace(label, '').trim();
                         }
 
-                        // 2. Try finding the label and getting the value from the previous sibling
-                        // Structure: <div>Value</div><div>Label</div>
                         const labelNodes = Array.from(block.querySelectorAll('div, span')).filter(el =>
-                            el.textContent?.trim() === label.replace(':', '').trim() // Handle "Base:" vs "Base"
+                            el.textContent?.trim() === label.replace(':', '').trim()
                         );
                         if (labelNodes.length > 0) {
                             const valueNode = labelNodes[0].previousElementSibling;
@@ -139,10 +132,10 @@ async function extractWidgetOnly(page, url) {
                     };
 
                     const tcValue = extractField('TC:');
-                    const baseValue = extractField('Base');
-                    const equityValue = extractField('Equity');
-                    const signOnValue = extractField('Sign-on');
-                    const bonusValue = extractField('Bonus');
+                    const baseValue = extractField('Base:');
+                    const equityValue = extractField('Equity:');
+                    const signOnValue = extractField('Sign-on:');
+                    const bonusValue = extractField('Bonus:');
 
                     const resultText = block.querySelector('.text-xs.font-semibold')?.textContent?.trim() ||
                         block.querySelector('.font-semibold')?.textContent?.trim() || "";
@@ -189,22 +182,57 @@ async function runTest() {
     const page = await context.newPage();
     await login(page);
 
-    const testUrls = [
-        "https://www.teamblind.com/post/is-nvidia-really-fcked-like-everyone-says-uakgdxh7",
-        "https://www.teamblind.com/post/nvidia-vs-startup-wh0rtba4",
-        "https://www.teamblind.com/post/nvidia-offer-vs-google-team-match-shall-i-wait-413onfna",
-        "https://www.teamblind.com/post/meta-vs-nvidia-ihmsb7tg",
-        "https://www.teamblind.com/post/amzn-stock-is-soaring-is-nvidia-fcked-hxopjccc"
-    ];
+    // Read URLs from file
+    const urlsFile = path.join(__dirname, '../data/nvidia_offer_post_urls.txt');
+    const allUrls = fs.readFileSync(urlsFile, 'utf-8').split('\n').filter(url => url.trim());
+    const testUrls = allUrls.slice(0, 100); // First 100 URLs
 
-    const results = [];
-    for (const url of testUrls) {
-        const data = await extractWidgetOnly(page, url);
-        results.push({ url, ...data });
-        await page.waitForTimeout(2000);
+    console.log(`Testing ${testUrls.length} URLs...`);
+
+    // Create output directory
+    const outputDir = path.join(__dirname, '../data/posts_test');
+    if (!fs.existsSync(outputDir)) {
+        fs.mkdirSync(outputDir, { recursive: true });
     }
 
-    console.log(JSON.stringify(results, null, 2));
+    let stats = { total: 0, offers: 0, polls: 0, regular: 0, errors: 0 };
+
+    for (let i = 0; i < testUrls.length; i++) {
+        const url = testUrls[i];
+        console.log(`[${i + 1}/${testUrls.length}] Processing: ${url}`);
+
+        try {
+            const data = await extractWidgetOnly(page, url);
+
+            // Extract slug from URL (same logic as main scraper)
+            const slug = url.split('/post/')[1] || `post-${i}`;
+            const outputFile = path.join(outputDir, `${slug}.json`);
+
+            // Save individual file
+            fs.writeFileSync(outputFile, JSON.stringify({ url, ...data }, null, 2));
+            console.log(`  ✓ Saved: ${slug}.json (${data.post_type})`);
+
+            stats.total++;
+            if (data.post_type === 'offer') stats.offers++;
+            else if (data.post_type === 'poll') stats.polls++;
+            else stats.regular++;
+
+        } catch (error) {
+            console.error(`  ✗ Error: ${error.message}`);
+            stats.errors++;
+        }
+
+        await page.waitForTimeout(1000); // Small delay between requests
+    }
+
+    console.log(`\n=== Summary ===`);
+    console.log(`Total processed: ${stats.total}`);
+    console.log(`Offers found: ${stats.offers}`);
+    console.log(`Polls found: ${stats.polls}`);
+    console.log(`Regular posts: ${stats.regular}`);
+    console.log(`Errors: ${stats.errors}`);
+    console.log(`Output directory: ${outputDir}`);
+
     await browser.close();
 }
 

@@ -12,12 +12,8 @@ yarn-error.log*
 .DS_Store
 
 # Data files
-data/nvidia_urls_*.txt
-data/nvidia_posts_data.json
-data/posts_greedy/
-data/posts_greedy copy/
-* copy/
-* copy
+data/
+*.zip
 
 # Reports
 *report.md

@@ -1,8 +1,11 @@
 import { chromium } from "playwright";
 import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
-const COMPANY_POSTS_URL = "https://www.teamblind.com/company/NVIDIA/posts";
-const OUT_FILE = "../../data/nvidia_post_urls.txt";
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const COMPANY_POSTS_URL = "https://www.teamblind.com/company/NVIDIA/posts/nvidia-offer";
+const OUT_FILE = path.resolve(__dirname, "../../data/nvidia_offer_post_urls.txt");
 
 async function collectUrls() {
     const browser = await chromium.launch({ headless: false });
@@ -47,9 +50,6 @@ async function collectUrls() {
             console.log("No new URLs found on this page. Stopping to avoid duplicates/loops.");
             break;
         }
-
-        // For performance test, we only capture the first page
-        break;
 
         currentPage++;
         await page.waitForTimeout(1000); // Respectful delay
