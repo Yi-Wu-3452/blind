@@ -21,3 +21,9 @@ data/
 # Debug and Temp
 debug_output.json
 debug_extraction.log
+
+# Browser Profile
+browser_profile/
+
+# Screenshots
+*.png

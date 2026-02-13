@@ -8,7 +8,7 @@ const IN_FILE = path.resolve(__dirname, "../../data/tmobile_post_urls.txt");
 const OUT_DIR = path.resolve(__dirname, "../../data/tmobile_posts");
 
 // Import the extraction logic from the optimized script
-import { extractPostData } from "./extract_post_details_optimized.mjs";
+import { extractPostData } from "../core/extract_post_details_optimized.mjs";
 
 const CREDENTIALS = {
     email: "fortestblind2026@gmail.com",

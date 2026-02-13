@@ -517,6 +517,10 @@ async function extractPostData(page, url) {
             if (commentId && externalThreadResults[commentId]) return externalThreadResults[commentId];
             let threadContainer = rootElement.querySelector('div[class*="pl-"]');
             if (!threadContainer && rootElement.nextElementSibling?.className?.includes('pl-')) threadContainer = rootElement.nextElementSibling;
+            if (!threadContainer) {
+                const parentSibling = rootElement.parentElement?.nextElementSibling;
+                if (parentSibling) threadContainer = parentSibling.className?.includes('pl-') ? parentSibling : parentSibling.querySelector('div[class*="pl-"]');
+            }
             if (!threadContainer) return [];
             const replyElements = Array.from(threadContainer.querySelectorAll('div[id^="comment-"]:not([id^="comment-group-"])')).filter(el => {
                 let parent = el.parentElement;
@@ -616,38 +620,41 @@ async function startOrganicScraping() {
                     continue;
                 }
 
-                console.log(`👉 Clicking into: ${slug}`);
+                console.log(`👉 Opening in new tab: ${slug}`);
                 let retry = 0;
                 let success = false;
                 while (retry < 3 && !success) {
+                    const postPage = await context.newPage();
                     try {
-                        const link = await page.$(`article a[href*="${slug}"]`);
-                        if (link) {
-                            await link.click({ force: true });
-                            await page.waitForTimeout(WAIT_AFTER_NAVIGATION);
-                            const data = await extractPostData(page, postUrl);
-                            await downloadAllImages(data, postUrl);
-                            fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
-                            console.log(`✅ Saved: ${filePath} (${data.replies.length} comments)`);
-                            success = true;
-                        } else {
-                            throw new Error("LINK_NOT_FOUND");
-                        }
+                        // Navigate to post with Referer header
+                        await postPage.goto(postUrl, {
+                            waitUntil: "networkidle",
+                            timeout: 60000,
+                            referer: listUrl
+                        });
+
+                        const data = await extractPostData(postPage, postUrl);
+                        await downloadAllImages(data, postUrl);
+                        fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+                        console.log(`✅ Saved: ${filePath} (${data.replies.length} comments)`);
+                        success = true;
                     } catch (e) {
                         retry++;
                         if (e.message === "RATE_LIMITED") {
                             console.log(`⚠️ Rate limit hit. Cooling down 5m...`);
+                            await postPage.close();
                             await page.waitForTimeout(300000);
-                            await page.goto(listUrl, { waitUntil: "networkidle" });
                         } else {
                             console.log(`❌ Error: ${e.message}. Retrying...`);
-                            await page.goto(listUrl, { waitUntil: "networkidle" });
                         }
+                    } finally {
+                        await postPage.close();
                     }
                 }
                 if (!success) console.error(`❌ Failed to scrape: ${postUrl}`);
-                await page.goto(listUrl, { waitUntil: "networkidle" }).catch(() => { });
-                const delay = 5000 + Math.random() * 8000;
+
+                // Adaptive human delay between posts
+                const delay = 3000 + Math.random() * 5000;
                 await page.waitForTimeout(delay);
             }
         } catch (e) {

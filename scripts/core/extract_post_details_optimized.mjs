@@ -16,7 +16,7 @@ const CREDENTIALS = {
     password: "fortest00001!"
 };
 
-const SHOULD_LOGIN = true;
+const SHOULD_LOGIN = !process.argv.includes('--persistent');
 
 // OPTIMIZATION: Balanced wait times - faster but still robust
 const WAIT_AFTER_CLICK = 1000; // Balanced: fast but ensures comments load
@@ -305,14 +305,14 @@ async function extractPostData(page, url) {
             if (loadMoreBtn) {
                 const beforeCount = await page.$$eval('div[id^="comment-"]', els => els.length);
                 debug_info.batch_clicks++;
-                // Use force: true to bypass pointer interception from overlays
-                await loadMoreBtn.click({ force: true, timeout: 5000 });
+                // Use JS click to bypass pointer interception from overlays
+                await loadMoreBtn.evaluate(b => b.click());
 
                 // Check if clicking triggered a blocker
                 const dismissed = await dismissBlockers(page);
                 if (dismissed) {
                     // Try clicking again if it was blocked
-                    await loadMoreBtn.click({ force: true, timeout: 5000 }).catch(() => { });
+                    await loadMoreBtn.evaluate(b => b.click()).catch(() => { });
                 }
 
                 // OPTIMIZATION: Wait for DOM change instead of fixed timeout
@@ -350,7 +350,7 @@ async function extractPostData(page, url) {
 
                 if (loadMoreBtn) {
                     debug_info.batch_clicks++;
-                    await loadMoreBtn.click();
+                    await loadMoreBtn.evaluate(b => b.click());
                     await dismissBlockers(page);
                     await waitForDOMStability(page, WAIT_AFTER_CLICK);
                     loadMoreAttempts++;
@@ -389,8 +389,8 @@ async function extractPostData(page, url) {
             console.log(`  ⚡ Expanding ${key}...`);
 
             try {
-                // Use force: true for nested replies too
-                await btn.click({ timeout: 5000, force: true });
+                // Use JS click for nested replies too
+                await btn.evaluate(b => b.click());
                 await dismissBlockers(page);
                 attemptedIds.add(key);
 
@@ -853,9 +853,23 @@ async function extractPostData(page, url) {
 
             let visibleCount = nestedReplies.length;
             let buttonCount = 0;
-            const moreRepliesBtn = Array.from(el.querySelectorAll('button, a')).find(b => /more repl/i.test(b.innerText));
-            if (moreRepliesBtn) {
-                const match = moreRepliesBtn.innerText.match(/(\d+)/);
+            // Search for moreBtn inside el OR in its sibling container
+            const findMoreBtn = (root) => Array.from(root.querySelectorAll('button, a')).find(b => /more repl/i.test(b.innerText));
+            let moreBtn = findMoreBtn(el);
+            if (!moreBtn) {
+                let threadContainer = el.querySelector('div[class*="pl-"]');
+                if (!threadContainer && el.nextElementSibling?.className?.includes('pl-')) threadContainer = el.nextElementSibling;
+                if (!threadContainer) {
+                    const parentSibling = el.parentElement?.nextElementSibling;
+                    if (parentSibling) threadContainer = parentSibling.className?.includes('pl-') ? parentSibling : parentSibling.querySelector('div[class*="pl-"]');
+                }
+                if (threadContainer) {
+                    moreBtn = findMoreBtn(threadContainer);
+                }
+            }
+
+            if (moreBtn) {
+                const match = moreBtn.innerText.match(/(\d+)/);
                 if (match) {
                     buttonCount = parseInt(match[1], 10);
                 }
@@ -917,8 +931,36 @@ async function startScraping() {
         }
     }
 
-    const browser = await chromium.launch({ headless: false });
-    const context = await browser.newContext();
+
+    const usePersistentContext = process.argv.includes('--persistent');
+    let browser, context;
+
+    if (usePersistentContext) {
+        const userDataDir = path.resolve(__dirname, "../../browser_profile");
+        if (!fs.existsSync(userDataDir)) {
+            fs.mkdirSync(userDataDir, { recursive: true });
+        }
+        console.log(`Using persistent browser profile at: ${userDataDir}`);
+
+        context = await chromium.launchPersistentContext(userDataDir, {
+            headless: false,
+            channel: 'chrome',
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-infobars',
+                '--window-position=0,0',
+                '--ignore-certificate-errors',
+                '--ignore-certificate-errors-spki-list',
+                '--window-size=1920,1080',
+                '--user-agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"'
+            ],
+            viewport: { width: 1920, height: 1080 }
+        });
+    } else {
+        browser = await chromium.launch({ headless: false });
+        context = await browser.newContext();
+    }
 
     // OPTIMIZATION: Block unnecessary resources to speed up page loads
     await context.route('**/*', (route) => {
@@ -935,7 +977,8 @@ async function startScraping() {
         }
     });
 
-    const page = await context.newPage();
+    const pages = context.pages();
+    const page = pages.length > 0 ? pages[0] : await context.newPage();
 
     if (SHOULD_LOGIN) {
         await login(page);
@@ -997,7 +1040,11 @@ async function startScraping() {
         await page.waitForTimeout(delay);
     }
 
-    await browser.close();
+    if (browser) {
+        await browser.close();
+    } else {
+        await context.close();
+    }
     console.log("✅ Scraping completed.");
 }
 

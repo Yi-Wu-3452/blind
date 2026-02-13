@@ -1,68 +1,99 @@
 import { chromium } from "playwright";
+import fs from "fs";
 
-const CREDENTIALS = {
-    email: "fortestblind2026@gmail.com",
-    password: "fortest00001!"
-};
-
-async function test() {
+async function debugExtraction() {
+    const url = "https://www.teamblind.com/post/att-and-t-mobile-cutting-1000s-of-jobs-3ba4to0r";
     const browser = await chromium.launch({ headless: false });
     const page = await browser.newPage();
 
-    // Login
-    await page.goto("https://www.teamblind.com/login");
-    await page.fill('input[name="email"]', CREDENTIALS.email);
-    await page.fill('input[name="password"]', CREDENTIALS.password);
-    await page.click('button[type="submit"]');
-    await page.waitForTimeout(5000);
+    console.log(`Navigating to ${url}...`);
+    await page.goto(url, { waitUntil: "networkidle" });
 
-    // Go to test URL
-    await page.goto("https://www.teamblind.com/post/nvidia-vs-startup-wh0rtba4");
-    await page.waitForTimeout(2000);
+    // Give it a moment to stabilize
+    await page.waitForTimeout(3000);
 
-    // Click View Result
-    const viewBtn = await page.$('button:has-text("View Result")');
-    if (viewBtn) {
-        await viewBtn.click();
-        await page.waitForTimeout(3000);
-    }
-
-    // Extract
     const result = await page.evaluate(() => {
-        const pollContainer = document.querySelector('div.rounded-lg.border');
-        const offerBlocks = pollContainer.querySelectorAll('div.flex.space-x-2.rounded-lg.border');
-        const firstBlock = offerBlocks[0];
+        const scrapeTimeRaw = Date.now();
 
-        const extractField = (label) => {
-            const prefixNodes = Array.from(firstBlock.querySelectorAll('div, span')).filter(el =>
-                el.textContent?.trim().startsWith(label) && el.children.length === 0
-            );
-            if (prefixNodes.length > 0) {
-                return prefixNodes[0].textContent.replace(label, '').trim();
-            }
-
-            const labelNodes = Array.from(firstBlock.querySelectorAll('div, span')).filter(el =>
-                el.textContent?.trim() === label.replace(':', '').trim()
-            );
-            if (labelNodes.length > 0) {
-                const valueNode = labelNodes[0].previousElementSibling;
-                if (valueNode) return valueNode.textContent.trim();
-            }
-
-            return "";
+        const normalizeDateInternal = (dateStr) => {
+            if (!dateStr) return "";
+            return dateStr.trim();
         };
 
-        return {
-            tc: extractField('TC:'),
-            base_with_colon: extractField('Base:'),
-            base_without_colon: extractField('Base'),
-            equity_with_colon: extractField('Equity:'),
-            equity_without_colon: extractField('Equity')
+        const extractReplies = (rootElement, depth = 0) => {
+            if (depth > 10) return [];
+            const commentId = rootElement.id;
+
+            // LOGGING for debug
+            const debugInfo = {
+                id: commentId,
+                hasPlInSelf: !!rootElement.querySelector('div[class*="pl-"]'),
+                nextSiblingClass: rootElement.nextElementSibling?.className || "null",
+                parentNextSiblingClass: rootElement.parentElement?.nextElementSibling?.className || "null",
+                parentNextSiblingHasPl: !!rootElement.parentElement?.nextElementSibling?.querySelector('div[class*="pl-"]')
+            };
+
+            let threadContainer = rootElement.querySelector('div[class*="pl-"]');
+            if (!threadContainer && rootElement.nextElementSibling?.className?.includes('pl-')) threadContainer = rootElement.nextElementSibling;
+            if (!threadContainer) {
+                const parentSibling = rootElement.parentElement?.nextElementSibling;
+                if (parentSibling) threadContainer = parentSibling.className?.includes('pl-') ? parentSibling : parentSibling.querySelector('div[class*="pl-"]');
+            }
+
+            if (!threadContainer) return [];
+
+            const replyElements = Array.from(threadContainer.querySelectorAll('div[id^="comment-"]:not([id^="comment-group-"])')).filter(el => {
+                let parent = el.parentElement;
+                while (parent && parent !== threadContainer) {
+                    if (parent.id && parent.id.startsWith('comment-') && !parent.id.startsWith('comment-group-')) return false;
+                    parent = parent.parentElement;
+                }
+                return true;
+            });
+
+            return replyElements.map(el => {
+                const header = el.querySelector('.flex.flex-wrap.text-xs.font-semibold.text-gray-700');
+                const rUserName = header?.querySelector('span:not(.text-gray-600)')?.textContent?.trim() || "";
+                return {
+                    userName: rUserName,
+                    commentId: el.id,
+                    nested: extractReplies(el, depth + 1)
+                };
+            });
         };
+
+        const rootCommentElements = Array.from(document.querySelectorAll('div[id^="comment-"]:not([id^="comment-group-"])')).filter(el => {
+            return !el.parentElement.closest('div[class*="pl-"]');
+        });
+
+        return rootCommentElements.map(el => {
+            const header = el.querySelector('.flex.flex-wrap.text-xs.font-semibold.text-gray-700');
+            const rUserName = header?.querySelector('span:not(.text-gray-600)')?.textContent?.trim() || "";
+            return {
+                userName: rUserName,
+                commentId: el.id,
+                nested: extractReplies(el)
+            };
+        });
     });
 
     console.log(JSON.stringify(result, null, 2));
+
+    // Find scandeep and see if it has nested
+    const scandeep = result.find(c => c.userName === "scandeep");
+    if (scandeep) {
+        console.log("\n--- SCANDEEP FOUND ---");
+        console.log(`Nested count: ${scandeep.nested.length}`);
+        if (scandeep.nested.length > 0) {
+            console.log("Nested Users:", scandeep.nested.map(n => n.userName).join(", "));
+        } else {
+            console.log("BUG REPRODUCED: No nested comments found for scandeep.");
+        }
+    } else {
+        console.log("scandeep not found in results.");
+    }
+
     await browser.close();
 }
 
-test().catch(console.error);
+debugExtraction().catch(console.error);
