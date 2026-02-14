@@ -1045,6 +1045,19 @@ async function extractPostData(page, url, logger = console, options = {}) {
         };
         const scrapedCommentsCount = countRecursive(replies);
 
+        // Count deleted/flagged comments
+        const countFlagged = (list) => {
+            let count = 0;
+            for (const item of list) {
+                if (item.isFlagged) count++;
+                if (item.nested && item.nested.length > 0) {
+                    count += countFlagged(item.nested);
+                }
+            }
+            return count;
+        };
+        const deletedCommentsCount = countFlagged(replies);
+
         // Annotate each comment with nestedCount (total nested replies, recursive)
         const annotateNestedCount = (list) => {
             for (const item of list) {
@@ -1062,7 +1075,8 @@ async function extractPostData(page, url, logger = console, options = {}) {
             scrapeTime: formattedScrapeTime,
             post_type: pollData?.post_type || "regular_post",
             title, content, userName, userCompany, date, channel, likes, views, commentsCount,
-            scrapedCommentsCount, // NEW FIELD
+            scrapedCommentsCount,
+            deletedCommentsCount, // Count of isFlagged comments in the tree
             images: postImages,
             poll: pollData,
             relatedCompanies, relatedTopics, replies,

@@ -8,7 +8,7 @@ import { extractPostData, dismissBlockers, downloadAllImages } from "./core/extr
 chromium.use(stealth());
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const URL = "https://www.teamblind.com/post/6-yoe-swe-looking-for-referrals-mt3f2xu0";
+const URL = "https://www.teamblind.com/post/looking-for-referrals-support-roles-72zi5ona";
 const OUT_DIR = path.resolve(__dirname, "../data/test_output");
 const LOG_DIR = path.resolve(OUT_DIR, "logs");
 
