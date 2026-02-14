@@ -432,7 +432,7 @@ async function extractPostData(page, url, logger = console, options = {}) {
             const loadMoreBtn = await page.waitForSelector(loaderSelector, { timeout: LOAD_MORE_TIMEOUT });
 
             if (loadMoreBtn) {
-                const beforeCount = await page.$$eval('div[id^="comment-"]', els => els.length);
+                const beforeCount = await page.$$eval('div[id^="comment-group-"]', els => els.length);
                 const btnData = await loadMoreBtn.evaluate(b => ({
                     tag: b.tagName,
                     text: b.innerText.trim(),
@@ -455,7 +455,7 @@ async function extractPostData(page, url, logger = console, options = {}) {
                 // OPTIMIZATION: Wait for DOM change instead of fixed timeout
                 await waitForDOMStability(page, WAIT_AFTER_CLICK);
 
-                const afterCount = await page.$$eval('div[id^="comment-"]', els => els.length);
+                const afterCount = await page.$$eval('div[id^="comment-group-"]', els => els.length);
                 loadMoreAttempts++;
                 logger.log(`  ✓ Loaded ${afterCount - beforeCount} more comments (total: ${afterCount})`);
                 await doCapture();
