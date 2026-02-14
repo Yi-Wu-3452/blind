@@ -1,8 +1,12 @@
-import { chromium } from "playwright";
+import { chromium } from "playwright-extra";
+import stealth from "puppeteer-extra-plugin-stealth";
 import fs from "fs";
 import path from "path";
 import https from "https";
 import { fileURLToPath } from "url";
+
+// Apply stealth plugin
+chromium.use(stealth());
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const IN_FILE = process.argv[2] && fs.existsSync(process.argv[2])
@@ -16,7 +20,7 @@ const CREDENTIALS = {
     password: "fortest00001!"
 };
 
-const SHOULD_LOGIN = !process.argv.includes('--persistent');
+const SHOULD_LOGIN = false;
 
 // OPTIMIZATION: Balanced wait times - faster but still robust
 const WAIT_AFTER_CLICK = 1000; // Balanced: fast but ensures comments load
@@ -89,23 +93,52 @@ function getFormattedScrapeTime() {
 
 async function login(page) {
     console.log("Attempting auto-login...");
-    await page.goto("https://www.teamblind.com/login", { waitUntil: "networkidle" });
+    try {
+        await page.goto("https://www.teamblind.com/login", { waitUntil: "domcontentloaded" });
 
-    // Increased timeout and made it more robust
-    await page.waitForSelector('input[name="email"]', { timeout: 15000 });
-    await page.fill('input[name="email"]', CREDENTIALS.email);
-    await page.fill('input[name="password"]', CREDENTIALS.password);
-    await page.click('button[type="submit"]');
+        // Try to fill form if selectors exist
+        try {
+            await page.waitForSelector('input[name="email"]', { timeout: 15000 });
+            await page.fill('input[name="email"]', CREDENTIALS.email);
+            await page.fill('input[name="password"]', CREDENTIALS.password);
+            await page.click('button[type="submit"]');
+            console.log("Login form submitted. Waiting for redirection...");
+        } catch (e) {
+            console.log("Login form not found or interaction failed. Specific error: " + e.message);
+        }
 
-    console.log("Login form submitted. Waiting for redirection...");
+        // Wait for successful login (URL change)
+        await page.waitForFunction(() => {
+            const url = window.location.href;
+            return !url.includes('/login') && !url.includes('/sign-in') && !url.includes('/login-required');
+        }, { timeout: 15000 });
 
-    // Wait for the URL to change from login or sign-in
-    await page.waitForFunction(() => {
-        const url = window.location.href;
-        return !url.includes('/login') && !url.includes('/sign-in') && !url.includes('/login-required');
-    }, { timeout: 30000 });
+        console.log("Auto-login successful. Proceeding to scrape...");
 
-    console.log("Auto-login successful. Proceeding to scrape...");
+    } catch (e) {
+        console.log("\n⚠️ Auto-login failed or timed out (CAPTCHA?).");
+        console.log("👉 Please log in MANUALLY in the browser window now.");
+        console.log("🛑 DO NOT CLOSE THE BROWSER! The script needs it open to continue.");
+        console.log("   Waiting up to 10 minutes for you to log in...");
+
+        try {
+            // Give user 10 minutes to log in manually
+            await page.waitForFunction(() => {
+                const url = window.location.href;
+                return !url.includes('/login') && !url.includes('/sign-in') && !url.includes('/login-required');
+            }, { timeout: 600000 }); // 10 minutes
+
+            console.log("✅ Manual login detected! Resuming scraper...");
+        } catch (waitError) {
+            if (waitError.message.includes('Target page, context or browser has been closed')) {
+                console.error("\n❌ Browser was closed by user. Exiting...");
+                process.exit(1);
+            } else {
+                console.error("\n❌ Manual login timed out. Exiting...");
+                process.exit(1);
+            }
+        }
+    }
 }
 
 async function downloadFile(url, dest) {
@@ -126,7 +159,7 @@ async function downloadFile(url, dest) {
     });
 }
 
-async function downloadAllImages(data, postUrl) {
+async function downloadAllImages(data, postUrl, logger = console) {
     const imagesDir = path.resolve(__dirname, "../../data/images");
     if (!fs.existsSync(imagesDir)) fs.mkdirSync(imagesDir, { recursive: true });
 
@@ -143,11 +176,11 @@ async function downloadAllImages(data, postUrl) {
 
             if (!fs.existsSync(filePath)) {
                 await downloadFile(url, filePath);
-                console.log(`  Downloaded: ${localFilename}`);
+                logger.log(`  Downloaded: ${localFilename}`);
             }
             targetArray.push(localFilename);
         } catch (e) {
-            console.error(`  Failed to download ${url}: ${e.message}`);
+            logger.log(`  Failed to download ${url}: ${e.message}`);
         }
     };
 
@@ -207,7 +240,7 @@ async function waitForDOMStability(page, minStableTime = 300, maxWait = 3000) {
  * Dismisses any popup blockers like the "Get Full Access" modal
  * @param {import("playwright").Page} page 
  */
-async function dismissBlockers(page) {
+async function dismissBlockers(page, logger = console) {
     try {
         // Check if we hit the "Oops! Something went wrong" error page
         const errorText = await page.evaluate(() => {
@@ -219,7 +252,7 @@ async function dismissBlockers(page) {
         });
 
         if (errorText) {
-            console.log("  🛑 Detected Blind Error Page (Rate Limit?).");
+            logger.log("  🛑 Detected Blind Error Page (Rate Limit?).");
             return "rate_limited";
         }
 
@@ -228,7 +261,7 @@ async function dismissBlockers(page) {
         if (closeBtn) {
             const isCloseBtn = await closeBtn.evaluate(el => el.querySelector('.sr-only')?.textContent?.includes('Close'));
             if (isCloseBtn) {
-                console.log("  ⚠️ Detected blocker modal. Dismissing...");
+                logger.log("  ⚠️ Detected blocker modal. Dismissing...");
                 await closeBtn.click({ force: true });
                 await page.waitForTimeout(500);
                 return "modal_dismissed";
@@ -241,16 +274,20 @@ async function dismissBlockers(page) {
 }
 
 
-async function extractPostData(page, url) {
+async function extractPostData(page, url, logger = console) {
     const scrapeTimeRaw = new Date();
     const scrapeTime = getFormattedScrapeTime();
-    console.log(`Processing (Optimized): ${url} at ${scrapeTime}`);
+    logger.log(`Processing (Optimized): ${url} at ${scrapeTime}`);
 
-    // OPTIMIZATION: Use domcontentloaded instead of networkidle for faster initial load
-    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 });
+    // OPTIMIZATION: Check if already on the page (preserves Referer from organic scraper)
+    if (page.url() !== url && page.url() !== url + "/") {
+        await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000, referer: "https://www.teamblind.com/" });
+    } else {
+        logger.log("  ℹ Page already at target URL (Skipping navigation)");
+    }
 
     // Check for "Oops" error page immediately after navigation
-    const status = await dismissBlockers(page);
+    const status = await dismissBlockers(page, logger);
     if (status === "rate_limited") {
         throw new Error("RATE_LIMITED");
     }
@@ -291,27 +328,45 @@ async function extractPostData(page, url) {
         focused_thread_scrapes: 0,
         expansion_logs: []
     };
+    const LOOP_LOAD_MORE_TIMEOUT = 2000;
 
     // OPTIMIZATION 1: Exhaust "View more comments" with adaptive waiting
-    console.log("⚡ Loading all top-level comments (optimized)...");
+    logger.log("⚡ Loading all top-level comments (optimized)...");
     let loadMoreVisible = true;
     let loadMoreAttempts = 0;
 
     while (loadMoreVisible && loadMoreAttempts < 50) {
         try {
-            await page.waitForSelector('button:has-text("View more comments")', { timeout: LOAD_MORE_TIMEOUT });
-            const loadMoreBtn = await page.$('button:has-text("View more comments")');
+            // Broaden selector to catch variations and ensure it's not disabled/hidden
+            const loaderSelector = [
+                'button:has-text("View more comments"):not([disabled])',
+                'button:has-text("Show more comments"):not([disabled])',
+                'button:has-text("Load more comments"):not([disabled])',
+                'a:has-text("View more comments")',
+                'a:has-text("Show more comments")',
+                'a:has-text("Load more comments")'
+            ].join(', ');
+
+            const loadMoreBtn = await page.waitForSelector(loaderSelector, { timeout: LOAD_MORE_TIMEOUT });
 
             if (loadMoreBtn) {
                 const beforeCount = await page.$$eval('div[id^="comment-"]', els => els.length);
+                const btnData = await loadMoreBtn.evaluate(b => ({
+                    tag: b.tagName,
+                    text: b.innerText.trim(),
+                    disabled: b.disabled
+                }));
+
                 debug_info.batch_clicks++;
-                // Use JS click to bypass pointer interception from overlays
+                logger.log(`  ⚡ Clicking ${btnData.tag} "${btnData.text}" (total so far: ${beforeCount})...`);
+
+                // Scroll into view and click
+                await loadMoreBtn.scrollIntoViewIfNeeded().catch(() => { });
                 await loadMoreBtn.evaluate(b => b.click());
 
                 // Check if clicking triggered a blocker
-                const dismissed = await dismissBlockers(page);
+                const dismissed = await dismissBlockers(page, logger);
                 if (dismissed) {
-                    // Try clicking again if it was blocked
                     await loadMoreBtn.evaluate(b => b.click()).catch(() => { });
                 }
 
@@ -320,12 +375,17 @@ async function extractPostData(page, url) {
 
                 const afterCount = await page.$$eval('div[id^="comment-"]', els => els.length);
                 loadMoreAttempts++;
-                console.log(`  ✓ Loaded ${afterCount - beforeCount} more comments (total: ${afterCount})`);
+                logger.log(`  ✓ Loaded ${afterCount - beforeCount} more comments (total: ${afterCount})`);
             } else {
+                logger.log("  ℹ Handle for 'View more comments' was null?");
                 loadMoreVisible = false;
             }
         } catch (e) {
-            console.log(`  ℹ No more 'View more comments' buttons`);
+            if (!e.message.includes('Timeout')) {
+                logger.log(`  ℹ Error finding 'View more comments': ${e.message}`);
+            } else {
+                logger.log(`  ℹ No more 'View more comments' buttons (or timeout)`);
+            }
             loadMoreVisible = false;
         }
     }
@@ -341,12 +401,19 @@ async function extractPostData(page, url) {
         // Re-check for top-level comments with shorter timeout
         let loadMoreVisible = true;
         let loadMoreAttempts = 0;
-        const LOOP_LOAD_MORE_TIMEOUT = 2000; // Reduced from 5000ms
-
         while (loadMoreVisible && loadMoreAttempts < 50) {
             try {
-                await page.waitForSelector('button:has-text("View more comments")', { timeout: LOOP_LOAD_MORE_TIMEOUT });
-                const loadMoreBtn = await page.$('button:has-text("View more comments")');
+                const loaderSelector = [
+                    'button:has-text("View more comments"):not([disabled])',
+                    'button:has-text("Show more comments"):not([disabled])',
+                    'button:has-text("Load more comments"):not([disabled])',
+                    'a:has-text("View more comments")',
+                    'a:has-text("Show more comments")',
+                    'a:has-text("Load more comments")'
+                ].join(', ');
+
+                await page.waitForSelector(loaderSelector, { timeout: LOOP_LOAD_MORE_TIMEOUT });
+                const loadMoreBtn = await page.$(loaderSelector);
 
                 if (loadMoreBtn) {
                     debug_info.batch_clicks++;
@@ -354,10 +421,8 @@ async function extractPostData(page, url) {
                     await dismissBlockers(page);
                     await waitForDOMStability(page, WAIT_AFTER_CLICK);
                     loadMoreAttempts++;
-                    console.log(`  [Loop ${loopCount}] Loaded more comments (${loadMoreAttempts})`);
+                    logger.log(`  [Loop ${loopCount}] Loaded more comments (${loadMoreAttempts})`);
                     progressMade = true;
-                } else {
-                    loadMoreVisible = false;
                 }
             } catch (e) {
                 loadMoreVisible = false;
@@ -386,7 +451,7 @@ async function extractPostData(page, url) {
             if (attemptedIds.has(key) || (!btnInfo.id && btnInfo.isLink)) continue;
 
             const currentUrl = page.url();
-            console.log(`  ⚡ Expanding ${key}...`);
+            logger.log(`  ⚡ Expanding ${key}...`);
 
             try {
                 // Use JS click for nested replies too
@@ -397,18 +462,18 @@ async function extractPostData(page, url) {
                 // OPTIMIZATION: Shorter wait after click
                 await page.waitForTimeout(WAIT_AFTER_CLICK);
             } catch (e) {
-                console.log(`    ✗ Failed to click ${key}: ${e.message}`);
+                logger.log(`    ✗ Failed to click ${key}: ${e.message}`);
                 continue;
             }
 
             if (page.url() !== currentUrl) {
-                console.log(`    → Navigated to thread view`);
+                logger.log(`    → Navigated to thread view`);
 
                 try {
                     // OPTIMIZATION: Use domcontentloaded instead of networkidle
                     await page.waitForSelector('div[id^="comment-"]', { timeout: 8000 });
                 } catch (e) {
-                    console.log("    ⚠ Thread page slow/blank, going back");
+                    logger.log("    ⚠ Thread page slow/blank, going back");
                     await page.goBack({ waitUntil: "domcontentloaded" });
                     await page.waitForTimeout(WAIT_AFTER_NAVIGATION);
                     progressMade = true;
@@ -505,9 +570,13 @@ async function extractPostData(page, url) {
                 }, { scrapeTimeRaw: scrapeTimeRaw.getTime() });
 
                 if (threadData.id) {
-                    console.log(`    ✓ Scraped ${threadData.replies.length} replies for ${threadData.id}`);
+                    logger.log(`    ✓ Scraped ${threadData.replies.length} replies for ${threadData.id}`);
                     debug_info.focused_thread_scrapes++;
                     threadResults[threadData.id] = threadData.replies;
+                    // Also key by btn ID if it's a group ID
+                    if (btnInfo.id && btnInfo.id.includes('group')) {
+                        threadResults[btnInfo.id] = threadData.replies;
+                    }
                 } else if (btnInfo.id) {
                     debug_info.focused_thread_scrapes++;
                     threadResults[btnInfo.id] = threadData.replies;
@@ -520,7 +589,7 @@ async function extractPostData(page, url) {
                 try {
                     await page.waitForSelector('h1', { timeout: 8000 });
                 } catch (e) {
-                    console.log("    ⚠ Failed to restore main post, reloading");
+                    logger.log("    ⚠ Failed to restore main post, reloading");
                     await page.reload({ waitUntil: "domcontentloaded" });
                 }
 
@@ -537,11 +606,161 @@ async function extractPostData(page, url) {
         await page.waitForTimeout(300); // Reduced from 500ms
     }
 
+    // Phase 3: Proactive navigation fallback for missed/stubborn groups
+    const finalGroups = await page.evaluate(() => {
+        const results = [];
+        const groups = document.querySelectorAll('div[id^="comment-group-"]');
+        groups.forEach(g => {
+            const commentId = g.id.replace('comment-group-', '');
+            // Broad search for ANY indicator of replies
+            const buttons = Array.from(g.querySelectorAll('button, a'));
+            const expansionBtn = buttons.find(el => {
+                const text = el.innerText.toLowerCase();
+                // Match "View 1 more reply", "6 replies", "View replies", etc.
+                return (text.includes('repl') || text.includes('more')) &&
+                    !['reply', 'share', 'like', 'report'].includes(text);
+            });
+
+            if (expansionBtn) {
+                results.push({
+                    groupId: g.id,
+                    commentId: commentId,
+                    text: expansionBtn.innerText.trim(),
+                    fullHtml: g.innerHTML.substring(0, 500) // For debugging if needed
+                });
+            }
+        });
+        return results;
+    });
+
+    logger.log(`  ℹ Found ${finalGroups.length} potential expansion groups (Phase 3 detection)`);
+    for (const group of finalGroups) {
+        // Log all found groups for debugging
+        logger.log(`    🔍 Evaluating ${group.groupId} ("${group.text}")`);
+
+        // Double check if we already have these results (possibly from Phase 2)
+        if (threadResults[group.groupId] || threadResults[group.commentId]) {
+            // Check if what we have is empty vs what we expect (if we can tell)
+            const existing = threadResults[group.groupId] || threadResults[group.commentId];
+            if (existing && existing.length > 0) {
+                logger.log(`    ℹ Skipping ${group.groupId} (already have ${existing.length} replies)`);
+                continue;
+            }
+        }
+
+        const currentUrl = page.url().split('?')[0];
+        const threadUrl = `${currentUrl}/${group.commentId}`;
+
+        logger.log(`  ⚡ Aggressive Fallback for ${group.groupId} (${group.text})...`);
+
+        try {
+            await page.goto(threadUrl, { waitUntil: "domcontentloaded" });
+            await page.waitForSelector('div[id^="comment-"]', { timeout: 8000 });
+
+            const threadData = await page.evaluate(({ scrapeTimeRaw }) => {
+                const normalizeDateInternal = (dateStr) => {
+                    if (!dateStr) return "";
+                    const cleanStr = dateStr.trim().replace(/·/g, '').trim();
+                    const now = new Date(scrapeTimeRaw);
+                    const relMatch = cleanStr.match(/^(\d+)([dhms])$/);
+                    if (relMatch) {
+                        const val = parseInt(relMatch[1], 10);
+                        const unit = relMatch[2];
+                        const d = new Date(now);
+                        if (unit === 'd') d.setDate(d.getDate() - val);
+                        else if (unit === 'h') d.setHours(d.getHours() - val);
+                        else if (unit === 'm') d.setMinutes(d.getMinutes() - val);
+                        return d.toISOString().split('T')[0];
+                    }
+                    if (cleanStr.includes(',')) {
+                        const d = new Date(cleanStr);
+                        if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
+                    }
+                    const mdMatch = cleanStr.match(/^([A-Za-z]+)\s+(\d+)$/);
+                    if (mdMatch) {
+                        const yr = now.getFullYear();
+                        const d = new Date(`${mdMatch[1]} ${mdMatch[2]}, ${yr}`);
+                        if (d > now) d.setFullYear(yr - 1);
+                        if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
+                    }
+                    const fallback = new Date(cleanStr);
+                    return !isNaN(fallback.getTime()) ? fallback.toISOString().split('T')[0] : cleanStr;
+                };
+
+                const buildCommentTree = (groupElement) => {
+                    if (!groupElement) return [];
+                    const commentsInGroup = Array.from(groupElement.querySelectorAll('div[id^="comment-"]:not([id^="comment-group-"])'));
+                    if (commentsInGroup.length === 0) return [];
+
+                    const flatList = commentsInGroup.map(el => {
+                        let depth = 0;
+                        let current = el;
+                        while (current && current !== groupElement) {
+                            const match = current.className?.match(/pl-\[(\d+)px\]/);
+                            if (match) {
+                                depth = parseInt(match[1], 10);
+                                break;
+                            }
+                            current = current.parentElement;
+                        }
+                        const header = el.querySelector('.flex.flex-wrap.text-xs.font-semibold.text-gray-700');
+                        return {
+                            depth,
+                            data: {
+                                userName: header?.querySelector('span:not(.text-gray-600)')?.textContent?.trim() || "Anonymous",
+                                company: header?.querySelector('a[href^="/company/"]')?.textContent?.trim() || "",
+                                date: normalizeDateInternal(header?.querySelector('span.text-gray-600')?.textContent?.trim() || ""),
+                                content: el.querySelector('div.whitespace-pre-wrap, p')?.textContent?.trim() || "",
+                                likes: el.querySelector('button[aria-label*="Like"]')?.textContent?.trim() || "0",
+                                images: Array.from(el.querySelectorAll('img[src*="/uploads/atch_img/"]')).map(img => img.src),
+                                commentId: el.id,
+                                nested: []
+                            }
+                        };
+                    });
+
+                    const tree = [];
+                    const stack = [];
+                    flatList.forEach(item => {
+                        while (stack.length > 0 && stack[stack.length - 1].depth >= item.depth) stack.pop();
+                        if (stack.length === 0) tree.push(item.data);
+                        else stack[stack.length - 1].data.nested.push(item.data);
+                        stack.push(item);
+                    });
+                    return tree;
+                };
+
+                // In thread view, we might have multiple groups if there are "Load more" blocks revealed.
+                // We find all groups and build trees.
+                const groups = Array.from(document.querySelectorAll('div[id^="comment-group-"]')).filter(g => {
+                    return !g.parentElement.closest('div[class*="pl-"]');
+                });
+
+                const allReplies = groups.flatMap(g => buildCommentTree(g));
+                const firstComment = document.querySelector('div[id^="comment-"]:not([id^="comment-group-"])');
+
+                return { id: firstComment ? firstComment.id : null, replies: allReplies };
+            }, { scrapeTimeRaw: scrapeTimeRaw.getTime() });
+
+            if (threadData.id) {
+                logger.log(`    ✓ Scraped ${threadData.replies.length} replies via fallback for ${threadData.id}`);
+                threadResults[threadData.id] = threadData.replies;
+                threadResults[group.groupId] = threadData.replies;
+            }
+
+            await page.goto(currentUrl, { waitUntil: "domcontentloaded" });
+            await page.waitForTimeout(WAIT_AFTER_NAVIGATION);
+        } catch (e) {
+            logger.log(`    ✗ Fallback failed for ${group.groupId}: ${e.message}`);
+            await page.goto(currentUrl, { waitUntil: "domcontentloaded" });
+        }
+    }
+
     // Click "View Result" on poll if present
     try {
         const viewResultBtn = await page.$('button:has-text("View Result")');
         if (viewResultBtn) {
-            console.log("⚡ Revealing poll results...");
+            logger.log("⚡ Revealing poll results...");
             await viewResultBtn.click();
             await page.waitForTimeout(800);
         }
@@ -777,133 +996,121 @@ async function extractPostData(page, url) {
             return { companyName, links };
         });
 
-        const extractReplies = (rootElement) => {
-            const commentId = rootElement.id;
-            if (commentId && externalThreadResults[commentId]) {
-                return externalThreadResults[commentId];
+        const buildCommentTree = (groupElement) => {
+            if (!groupElement) return [];
+
+            const commentsInGroup = Array.from(groupElement.querySelectorAll('div[id^="comment-"]:not([id^="comment-group-"])'));
+
+            // Handle Flagged (if no comments found but group exists)
+            if (commentsInGroup.length === 0 && groupElement.innerText.includes("Flagged by the community")) {
+                return [{
+                    userName: "System",
+                    company: "Blind",
+                    date: "",
+                    content: "Flagged by the community.",
+                    likes: "0",
+                    images: [],
+                    commentId: groupElement.id.replace('comment-group-', ''),
+                    nested: [],
+                    isFlagged: true
+                }];
             }
 
-            let threadContainer = rootElement.querySelector('div[class*="pl-"]');
-            if (!threadContainer && rootElement.nextElementSibling?.className?.includes('pl-')) {
-                threadContainer = rootElement.nextElementSibling;
-            }
-            if (!threadContainer) {
-                const parentSibling = rootElement.parentElement?.nextElementSibling;
-                if (parentSibling) {
-                    if (parentSibling.className?.includes('pl-')) {
-                        threadContainer = parentSibling;
-                    } else {
-                        threadContainer = parentSibling.querySelector('div[class*="pl-"]');
+            // 1. Map comments to flat list with depths
+            const flatList = commentsInGroup.map(el => {
+                let depth = 0;
+                let current = el;
+                while (current && current !== groupElement) {
+                    const match = current.className?.match(/pl-\[(\d+)px\]/);
+                    if (match) {
+                        depth = parseInt(match[1], 10);
+                        break;
                     }
+                    current = current.parentElement;
                 }
-            }
-            if (!threadContainer) return [];
 
-            const replyElements = Array.from(threadContainer.querySelectorAll('div[id^="comment-"]:not([id^="comment-group-"])')).filter(el => {
-                let parent = el.parentElement;
-                while (parent && parent !== threadContainer) {
-                    if (parent.id && parent.id.startsWith('comment-') && !parent.id.startsWith('comment-group-')) {
-                        return false;
-                    }
-                    parent = parent.parentElement;
-                }
-                return true;
-            });
-
-            return replyElements.map(el => {
                 const header = el.querySelector('.flex.flex-wrap.text-xs.font-semibold.text-gray-700');
-                const rCompany = header?.querySelector('a[href^="/company/"]')?.textContent?.trim() || "";
-                const rUserName = header?.querySelector('span:not(.text-gray-600)')?.textContent?.trim() || "";
-                const rDate = header?.querySelector('span.text-gray-600')?.textContent?.trim() || "";
-                const rContent = el.querySelector('div.whitespace-pre-wrap, p')?.textContent?.trim() || "";
-                const rLikes = el.querySelector('button[aria-label*="Like"]')?.textContent?.trim() || "0";
                 const images = Array.from(el.querySelectorAll('img[src*="/uploads/atch_img/"]')).map(img => img.src);
 
                 return {
-                    userName: rUserName,
-                    company: rCompany,
-                    date: normalizeDateInternal(rDate),
-                    content: rContent,
-                    likes: rLikes,
-                    images,
-                    commentId: el.id,
-                    nested: extractReplies(el)
+                    depth,
+                    data: {
+                        userName: header?.querySelector('span:not(.text-gray-600)')?.textContent?.trim() || "Anonymous",
+                        company: header?.querySelector('a[href^="/company/"]')?.textContent?.trim() || "",
+                        date: normalizeDateInternal(header?.querySelector('span.text-gray-600')?.textContent?.trim() || ""),
+                        content: el.querySelector('div.whitespace-pre-wrap, p')?.textContent?.trim() || "",
+                        likes: el.querySelector('button[aria-label*="Like"]')?.textContent?.trim() || "0",
+                        images,
+                        commentId: el.id,
+                        nested: []
+                    }
                 };
             });
+
+            // 2. Build tree from flat list, injecting external results
+            const tree = [];
+            const stack = [];
+            let skipUntilDepth = -1;
+
+            flatList.forEach(item => {
+                // If we are "inside" a comment that was satisfied by an external expansion, skip its DOM children
+                if (skipUntilDepth !== -1 && item.depth > skipUntilDepth) return;
+                skipUntilDepth = -1;
+
+                while (stack.length > 0 && stack[stack.length - 1].depth >= item.depth) {
+                    stack.pop();
+                }
+
+                // IMPORTANT: If we have external expansion results for this comment, USE THEM
+                const external = externalThreadResults[item.data.commentId] || externalThreadResults[groupElement.id];
+                if (external && external.length > 0 && item.depth === flatList[0].depth) {
+                    item.data.nested = external;
+                    skipUntilDepth = item.depth;
+                } else if (externalThreadResults[item.data.commentId]) {
+                    // Specific sub-expansion
+                    item.data.nested = externalThreadResults[item.data.commentId];
+                    skipUntilDepth = item.depth;
+                }
+
+                if (stack.length === 0) {
+                    tree.push(item.data);
+                } else {
+                    stack[stack.length - 1].data.nested.push(item.data);
+                }
+                stack.push(item);
+            });
+
+            return tree;
         };
 
-        const rootCommentElements = Array.from(document.querySelectorAll('div[id^="comment-"]:not([id^="comment-group-"])')).filter(el => {
-            return !el.parentElement.closest('div[class*="pl-"]');
+        const rootCommentGroups = Array.from(document.querySelectorAll('div[id^="comment-group-"]')).filter(group => {
+            return !group.parentElement.closest('div[class*="pl-"]');
         });
 
-        const allCommentsPreFilter = Array.from(document.querySelectorAll('div[id^="comment-"]:not([id^="comment-group-"])'));
-        const all_ids = allCommentsPreFilter.map(el => el.id);
+        const replies = rootCommentGroups.flatMap(group => buildCommentTree(group));
 
-        const replies = rootCommentElements.map(el => {
-            const header = el.querySelector('.flex.flex-wrap.text-xs.font-semibold.text-gray-700');
-            const rCompany = header?.querySelector('a[href^="/company/"]')?.textContent?.trim() || "";
-            const rUserName = header?.querySelector('span:not(.text-gray-600)')?.textContent?.trim() || "";
-            const rDate = header?.querySelector('span.text-gray-600')?.textContent?.trim() || "";
-            const rContent = el.querySelector('div.whitespace-pre-wrap, p')?.textContent?.trim() || "";
-            const rLikes = el.querySelector('button[aria-label*="Like"]')?.textContent?.trim() || "0";
-            const images = Array.from(el.querySelectorAll('img[src*="/uploads/atch_img/"]')).map(img => img.src);
-
-            const commentId = el.id;
-            let nestedReplies = extractReplies(el);
-
-            let visibleCount = nestedReplies.length;
-            let buttonCount = 0;
-            // Search for moreBtn inside el OR in its sibling container
-            const findMoreBtn = (root) => Array.from(root.querySelectorAll('button, a')).find(b => /more repl/i.test(b.innerText));
-            let moreBtn = findMoreBtn(el);
-            if (!moreBtn) {
-                let threadContainer = el.querySelector('div[class*="pl-"]');
-                if (!threadContainer && el.nextElementSibling?.className?.includes('pl-')) threadContainer = el.nextElementSibling;
-                if (!threadContainer) {
-                    const parentSibling = el.parentElement?.nextElementSibling;
-                    if (parentSibling) threadContainer = parentSibling.className?.includes('pl-') ? parentSibling : parentSibling.querySelector('div[class*="pl-"]');
-                }
-                if (threadContainer) {
-                    moreBtn = findMoreBtn(threadContainer);
+        // Calculate actual scraped count locally
+        const countRecursive = (list) => {
+            let count = 0;
+            for (const item of list) {
+                count++;
+                if (item.nested && item.nested.length > 0) {
+                    count += countRecursive(item.nested);
                 }
             }
-
-            if (moreBtn) {
-                const match = moreBtn.innerText.match(/(\d+)/);
-                if (match) {
-                    buttonCount = parseInt(match[1], 10);
-                }
-            }
-            const expectedNestedCount = visibleCount + buttonCount;
-
-            if ((!nestedReplies || nestedReplies.length === 0) && commentId && externalThreadResults[commentId]) {
-                nestedReplies = externalThreadResults[commentId];
-            }
-
-            return {
-                userName: rUserName,
-                company: rCompany,
-                date: normalizeDateInternal(rDate),
-                content: rContent,
-                likes: rLikes,
-                images,
-                commentId: el.id,
-                nested: nestedReplies,
-                expectedNestedCount
-            };
-        });
+            return count;
+        };
+        const scrapedCommentsCount = countRecursive(replies);
 
         return {
             scrapeTime: formattedScrapeTime,
             post_type: pollData?.post_type || "regular_post",
             title, content, userName, userCompany, date, channel, likes, views, commentsCount,
+            scrapedCommentsCount, // NEW FIELD
             images: postImages,
             poll: pollData,
             relatedCompanies, relatedTopics, replies,
-            debug: {
-                total_raw_comments: allCommentsPreFilter.length,
-                all_comment_ids: all_ids
-            }
+
         };
     }, { externalThreadResults: threadResults, scrapeTimeRaw: scrapeTimeRaw.getTime(), formattedScrapeTime: scrapeTime });
 
@@ -933,6 +1140,7 @@ async function startScraping() {
 
 
     const usePersistentContext = process.argv.includes('--persistent');
+    const useHeadless = process.argv.includes('--headless');
     let browser, context;
 
     if (usePersistentContext) {
@@ -943,7 +1151,7 @@ async function startScraping() {
         console.log(`Using persistent browser profile at: ${userDataDir}`);
 
         context = await chromium.launchPersistentContext(userDataDir, {
-            headless: false,
+            headless: useHeadless,
             channel: 'chrome',
             args: [
                 '--no-sandbox',
@@ -958,7 +1166,7 @@ async function startScraping() {
             viewport: { width: 1920, height: 1080 }
         });
     } else {
-        browser = await chromium.launch({ headless: false });
+        browser = await chromium.launch({ headless: useHeadless });
         context = await browser.newContext();
     }
 
@@ -990,8 +1198,21 @@ async function startScraping() {
         fs.mkdirSync(OUT_DIR, { recursive: true });
     }
 
+    const LOG_DIR = path.join(OUT_DIR, "logs");
+    if (!fs.existsSync(LOG_DIR)) {
+        fs.mkdirSync(LOG_DIR, { recursive: true });
+    }
+
     const allData = [];
     for (const url of urls) {
+        const identifier = url.split('/').pop() || `post_${Date.now()}`;
+        const filePath = `${OUT_DIR}/${identifier}.json`;
+
+        if (fs.existsSync(filePath)) {
+            console.log(`⏭️ Skipping ${url} - already exists`);
+            continue;
+        }
+
         let retryCount = 0;
         const maxRetries = 3;
         let success = false;
@@ -999,13 +1220,36 @@ async function startScraping() {
         while (retryCount <= maxRetries && !success) {
             try {
                 const startTime = Date.now();
-                const data = await extractPostData(page, url);
+
+                // Initialize per-post logger for standalone run
+                const logFile = path.join(LOG_DIR, `${identifier}.log`);
+                const logger = {
+                    log: (...args) => {
+                        const message = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
+                        const timestamp = new Date().toISOString();
+                        const line = `[${timestamp}] ${message}\n`;
+                        console.log(message); // Still log to stdout
+                        try {
+                            fs.appendFileSync(logFile, line);
+                        } catch (e) { /* Ignore log write errors */ }
+                    },
+                    error: (...args) => {
+                        const message = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
+                        const timestamp = new Date().toISOString();
+                        const line = `[${timestamp}] ERROR: ${message}\n`;
+                        console.error(message);
+                        try {
+                            fs.appendFileSync(logFile, line);
+                        } catch (e) { /* Ignore log write errors */ }
+                    }
+                };
+
+                const data = await extractPostData(page, url, logger);
                 const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
 
-                const identifier = url.split('/').pop() || `post_${Date.now()}`;
-                const filePath = `${OUT_DIR}/${identifier}.json`;
+                // identifier and filePath are already defined in the outer scope
 
-                await downloadAllImages(data, url);
+                await downloadAllImages(data, url, logger);
 
                 fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
                 console.log(`✅ Saved: ${filePath} (${elapsed}s, ${data.replies.length} top-level comments)`);
@@ -1048,7 +1292,7 @@ async function startScraping() {
     console.log("✅ Scraping completed.");
 }
 
-export { extractPostData, startScraping };
+export { extractPostData, startScraping, dismissBlockers, downloadAllImages, login };
 
 const isMain = process.argv[1].endsWith('extract_post_details_optimized.mjs');
 if (isMain) {

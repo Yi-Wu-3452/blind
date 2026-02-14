@@ -104,6 +104,12 @@ This document records the requirements provided by the user and the implementati
     1.  **Aggressive Blocker Dismissal**: Implemented a "search-and-destroy" strategy in `dismissBlockers` that finds and removes elements containing blocker text like "Get Full Access".
     2.  **JavaScript-Evaluated Clicks**: Replaced standard Playwright `btn.click()` with `btn.evaluate(b => b.click())` to bypass UI overlaps and ensure the click event hits the target button directly.
 - **Verified**: Confirmed capture of all 13 nested replies (including sub-threads) for the `sharkbait` comment.
+  
+### M. Comment Count Overcounting Fix (2026-02-13)
+- **Problem**: The scraper was overcounting comments (e.g., reporting 21 comments when only 14 were present).
+- **Cause**: The CSS selector `div[id^="comment-"]` was matching both actual comment elements and their parent "group" wrappers (which have IDs like `comment-group-[id]`).
+- **Fix**: Refined the selector to `div[id^="comment-"]:not([id^="comment-group-"])` across the balance of the script (stability checks, loading logs, and expansion logic). 
+- **Result**: Successfully resolved the discrepancy. Verified on post `looking-for-data-scientist-or-ml-engineer-referrals-zs87buw1` with accurate reporting of 14 top-level comments.
 
 ## 3. Results
 - **URL 1**: [NVIDIA Poll](https://www.teamblind.com/post/is-nvidia-really-fcked-like-everyone-says-uakgdxh7)
