@@ -709,7 +709,7 @@ async function extractPostData(page, url, logger = console, options = {}) {
         // Poll might not exist
     }
 
-    const data = await page.evaluate(({ externalThreadResults, scrapeTimeRaw, formattedScrapeTime }) => {
+    const data = await page.evaluate(({ externalThreadResults, capturedTopLevelResults, scrapeTimeRaw, formattedScrapeTime }) => {
         const getSafeText = (selector) => document.querySelector(selector)?.textContent?.trim() || "";
 
         const title = getSafeText("h1");
@@ -1032,6 +1032,18 @@ async function extractPostData(page, url, logger = console, options = {}) {
 
         const replies = rootCommentGroups.flatMap(group => buildCommentTree(group));
 
+        // Merge any top-level comments captured incrementally but no longer in the DOM
+        let rescuedCount = 0;
+        if (capturedTopLevelResults && Object.keys(capturedTopLevelResults).length > 0) {
+            const domGroupIds = new Set(rootCommentGroups.map(g => g.id));
+            for (const [groupId, capturedComment] of Object.entries(capturedTopLevelResults)) {
+                if (!domGroupIds.has(groupId)) {
+                    replies.push(capturedComment);
+                    rescuedCount++;
+                }
+            }
+        }
+
         // Calculate actual scraped count locally
         const countRecursive = (list) => {
             let count = 0;
@@ -1080,11 +1092,20 @@ async function extractPostData(page, url, logger = console, options = {}) {
             images: postImages,
             poll: pollData,
             relatedCompanies, relatedTopics, replies,
-
+            rescuedCount,
         };
-    }, { externalThreadResults: threadResults, scrapeTimeRaw: scrapeTimeRaw.getTime(), formattedScrapeTime: scrapeTime });
+    }, { externalThreadResults: threadResults, capturedTopLevelResults: topLevelResults, scrapeTimeRaw: scrapeTimeRaw.getTime(), formattedScrapeTime: scrapeTime });
 
     data.debug = { ...data.debug, ...debug_info };
+
+    // Log rescued comments if any
+    if (data.rescuedCount > 0) {
+        logger.log(`  ✓ Rescued ${data.rescuedCount} top-level comments from incremental capture (total: ${data.replies.length})`);
+        // Recalculate scraped count after rescue
+        const countAll = (list) => { let c = 0; for (const item of list) { c++; if (item.nested?.length) c += countAll(item.nested); } return c; };
+        data.scrapedCommentsCount = countAll(data.replies);
+    }
+    delete data.rescuedCount;
 
     return { url, ...data };
 }
@@ -1111,6 +1132,7 @@ async function startScraping() {
 
     const usePersistentContext = process.argv.includes('--persistent');
     const useHeadless = process.argv.includes('--headless');
+    const useCaptureTopLevel = process.argv.includes('--capture-toplevel');
     let browser, context;
 
     if (usePersistentContext) {
@@ -1214,7 +1236,11 @@ async function startScraping() {
                     }
                 };
 
-                const data = await extractPostData(page, url, logger);
+                const options = {
+                    captureTopLevel: useCaptureTopLevel
+                };
+
+                const data = await extractPostData(page, url, logger, options);
                 const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
 
                 // identifier and filePath are already defined in the outer scope

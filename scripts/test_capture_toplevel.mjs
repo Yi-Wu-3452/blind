@@ -8,7 +8,8 @@ import { extractPostData, dismissBlockers, downloadAllImages } from "./core/extr
 chromium.use(stealth());
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const URL = "https://www.teamblind.com/post/looking-for-referrals-support-roles-72zi5ona";
+// const URL = "https://www.teamblind.com/post/looking-for-referrals-support-roles-72zi5ona";
+const URL = "https://www.teamblind.com/post/referral-india-hdf3n6yc";
 const OUT_DIR = path.resolve(__dirname, "../data/test_output");
 const LOG_DIR = path.resolve(OUT_DIR, "logs");
 
