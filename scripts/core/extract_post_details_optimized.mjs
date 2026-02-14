@@ -1133,52 +1133,58 @@ async function startScraping() {
     const usePersistentContext = process.argv.includes('--persistent');
     const useHeadless = process.argv.includes('--headless');
     const useCaptureTopLevel = process.argv.includes('--capture-toplevel');
+    const useNewBrowser = process.argv.includes('--new-browser');
     let browser, context;
 
-    if (usePersistentContext) {
-        const userDataDir = path.resolve(__dirname, "../../browser_profile");
-        if (!fs.existsSync(userDataDir)) {
-            fs.mkdirSync(userDataDir, { recursive: true });
+    async function launchBrowserInstance() {
+        let b, ctx;
+        if (usePersistentContext) {
+            const userDataDir = path.resolve(__dirname, "../../browser_profile");
+            if (!fs.existsSync(userDataDir)) {
+                fs.mkdirSync(userDataDir, { recursive: true });
+            }
+            console.log(`Using persistent browser profile at: ${userDataDir}`);
+            ctx = await chromium.launchPersistentContext(userDataDir, {
+                headless: useHeadless,
+                channel: 'chrome',
+                args: [
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-infobars',
+                    '--window-position=0,0',
+                    '--ignore-certificate-errors',
+                    '--ignore-certificate-errors-spki-list',
+                    '--window-size=1920,1080',
+                    '--user-agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"'
+                ],
+                viewport: { width: 1920, height: 1080 }
+            });
+        } else {
+            b = await chromium.launch({ headless: useHeadless });
+            ctx = await b.newContext();
         }
-        console.log(`Using persistent browser profile at: ${userDataDir}`);
 
-        context = await chromium.launchPersistentContext(userDataDir, {
-            headless: useHeadless,
-            channel: 'chrome',
-            args: [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-infobars',
-                '--window-position=0,0',
-                '--ignore-certificate-errors',
-                '--ignore-certificate-errors-spki-list',
-                '--window-size=1920,1080',
-                '--user-agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"'
-            ],
-            viewport: { width: 1920, height: 1080 }
+        // OPTIMIZATION: Block unnecessary resources to speed up page loads
+        await ctx.route('**/*', (route) => {
+            const url = route.request().url();
+            if (url.includes('google-analytics') ||
+                url.includes('googletagmanager') ||
+                url.includes('facebook.com/tr') ||
+                url.includes('.woff') ||
+                url.includes('.woff2')) {
+                route.abort();
+            } else {
+                route.continue();
+            }
         });
-    } else {
-        browser = await chromium.launch({ headless: useHeadless });
-        context = await browser.newContext();
+
+        const pages = ctx.pages();
+        const pg = pages.length > 0 ? pages[0] : await ctx.newPage();
+        return { browser: b, context: ctx, page: pg };
     }
 
-    // OPTIMIZATION: Block unnecessary resources to speed up page loads
-    await context.route('**/*', (route) => {
-        const url = route.request().url();
-        // Block analytics, ads, and some media that we don't need
-        if (url.includes('google-analytics') ||
-            url.includes('googletagmanager') ||
-            url.includes('facebook.com/tr') ||
-            url.includes('.woff') ||
-            url.includes('.woff2')) {
-            route.abort();
-        } else {
-            route.continue();
-        }
-    });
-
-    const pages = context.pages();
-    const page = pages.length > 0 ? pages[0] : await context.newPage();
+    let page;
+    ({ browser, context, page } = await launchBrowserInstance());
 
     if (SHOULD_LOGIN) {
         await login(page);
@@ -1203,6 +1209,14 @@ async function startScraping() {
         if (fs.existsSync(filePath)) {
             console.log(`⏭️ Skipping ${url} - already exists`);
             continue;
+        }
+
+        // In new-browser mode, launch a fresh browser for each URL
+        if (useNewBrowser && urls.indexOf(url) > 0) {
+            console.log(`🔄 Launching new browser for: ${identifier}`);
+            if (browser) await browser.close().catch(() => { });
+            else await context.close().catch(() => { });
+            ({ browser, context, page } = await launchBrowserInstance());
         }
 
         let retryCount = 0;
