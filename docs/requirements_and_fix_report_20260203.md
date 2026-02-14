@@ -111,6 +111,15 @@ This document records the requirements provided by the user and the implementati
 - **Fix**: Refined the selector to `div[id^="comment-"]:not([id^="comment-group-"])` across the balance of the script (stability checks, loading logs, and expansion logic). 
 - **Result**: Successfully resolved the discrepancy. Verified on post `looking-for-data-scientist-or-ml-engineer-referrals-zs87buw1` with accurate reporting of 14 top-level comments.
 
+### N. Incremental Top-Level Capture Option & Phase 3 Removal (2026-02-14)
+- **Phase 3 Removal**: Removed the "Proactive navigation fallback" phase (~150 lines) that re-navigated to every `comment-group-*` thread URL as a safety net. Phase 2's expansion loop already handles all thread expansions, making Phase 3 redundant.
+- **New Option: `captureTopLevel`**: Added an opt-in `captureTopLevel` option to `extractPostData()`.
+  - **Usage**: `extractPostData(page, url, logger, { captureTopLevel: true })`
+  - **Behavior**: When enabled, incrementally captures top-level comment data (userName, company, date, content, likes, images, commentId) into a `topLevelResults` object during Phase 1. Runs after each "View more comments" click and once after Phase 1 completes.
+  - **Default**: `false` — existing behavior is unchanged.
+  - **Purpose**: Preserves top-level comment data before Phase 2 navigation, which can cause DOM state changes after `goBack()`.
+- **Verified**: Tested on `6-yoe-swe-looking-for-referrals-mt3f2xu0` — captured 11 top-level comments during Phase 1, 27/27 total comments matched metadata.
+
 ## 3. Results
 - **URL 1**: [NVIDIA Poll](https://www.teamblind.com/post/is-nvidia-really-fcked-like-everyone-says-uakgdxh7)
     - `post_type`: **"poll"**
