@@ -10,8 +10,33 @@ chromium.use(stealth());
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const URL = "https://www.teamblind.com/post/6-yoe-swe-looking-for-referrals-mt3f2xu0";
 const OUT_DIR = path.resolve(__dirname, "../data/test_output");
+const LOG_DIR = path.resolve(OUT_DIR, "logs");
 
 if (!fs.existsSync(OUT_DIR)) fs.mkdirSync(OUT_DIR, { recursive: true });
+if (!fs.existsSync(LOG_DIR)) fs.mkdirSync(LOG_DIR, { recursive: true });
+
+const slug = URL.split("/").pop();
+const logFile = path.join(LOG_DIR, `${slug}.log`);
+
+// Clear previous log
+fs.writeFileSync(logFile, "");
+
+const logger = {
+    log: (...args) => {
+        const message = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
+        const timestamp = new Date().toISOString();
+        const line = `[${timestamp}] ${message}\n`;
+        process.stdout.write(line);
+        try { fs.appendFileSync(logFile, line); } catch (e) { /* ignore */ }
+    },
+    error: (...args) => {
+        const message = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
+        const timestamp = new Date().toISOString();
+        const line = `[${timestamp}] ERROR: ${message}\n`;
+        process.stderr.write(line);
+        try { fs.appendFileSync(logFile, line); } catch (e) { /* ignore */ }
+    }
+};
 
 (async () => {
     const browser = await chromium.launch({ headless: false });
@@ -23,17 +48,16 @@ if (!fs.existsSync(OUT_DIR)) fs.mkdirSync(OUT_DIR, { recursive: true });
     try {
         await page.goto(URL, { waitUntil: "domcontentloaded", referer: "https://www.teamblind.com/" });
 
-        const data = await extractPostData(page, URL, console, { captureTopLevel: true });
+        const data = await extractPostData(page, URL, logger, { captureTopLevel: true });
 
-        const slug = URL.split("/").pop();
         const filePath = path.join(OUT_DIR, `${slug}.json`);
         fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
-        console.log(`\n✅ Saved: ${filePath}`);
-        console.log(`   Top-level comments: ${data.replies.length}`);
-        console.log(`   Scraped count: ${data.scrapedCommentsCount}`);
-        console.log(`   Metadata count: ${data.commentsCount}`);
+        logger.log(`✅ Saved: ${filePath}`);
+        logger.log(`   Top-level comments: ${data.replies.length}`);
+        logger.log(`   Scraped count: ${data.scrapedCommentsCount}`);
+        logger.log(`   Metadata count: ${data.commentsCount}`);
     } catch (e) {
-        console.error("❌ Error:", e.message);
+        logger.error(`Error: ${e.message}`);
     } finally {
         await browser.close();
     }
