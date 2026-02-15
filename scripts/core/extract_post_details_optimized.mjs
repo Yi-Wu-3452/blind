@@ -296,7 +296,8 @@ async function extractPostData(page, url, logger = console, options = {}) {
     // Wait for main content to appear
     await page.waitForSelector('h1', { timeout: 15000 });
 
-    // OPTIMIZATION: Hide sticky overlays/banners that often block clicks
+    // OPTIMIZATION: Hide sticky overlays/banners (DISABLED FOR DEBUG)
+    /*
     await page.evaluate(() => {
         const selectors = [
             'section.sticky',
@@ -304,12 +305,11 @@ async function extractPostData(page, url, logger = console, options = {}) {
             '[class*="sticky"]',
             '[class*="Overlay"]',
             '[class*="Modal"]',
-            '#onetrust-banner-sdk' // Common cookie banner
+            '#onetrust-banner-sdk'
         ];
         selectors.forEach(s => {
             const elements = document.querySelectorAll(s);
             elements.forEach(el => {
-                // Only hide if it's likely a bottom/top banner or overlay
                 const style = window.getComputedStyle(el);
                 if (style.position === 'fixed' || style.position === 'sticky') {
                     el.style.display = 'none';
@@ -317,6 +317,29 @@ async function extractPostData(page, url, logger = console, options = {}) {
             });
         });
     });
+    */
+
+    // Wait for hydration
+    logger.log("  ℹ Waiting for hydration...");
+    await page.waitForTimeout(5000);
+
+    // DEBUG: Log ALL IDs starting with comment-
+    const allIds = await page.evaluate(() => {
+        return Array.from(document.querySelectorAll('[id]'))
+            .map(el => el.id)
+            .filter(id => id.includes('comment-'));
+    });
+    logger.log(`  🔍 DEBUG: Found ${allIds.length} IDs containing 'comment-'.`);
+    if (allIds.some(id => id.includes('48433511'))) {
+        logger.log(`  ✅ DEBUG: Found 48433511 in global ID dump!`);
+    } else {
+        logger.log(`  ❌ DEBUG: 48433511 NOT in global ID dump.`);
+        // Log the IDs near 48427764
+        const index764 = allIds.findIndex(id => id.includes('48427764'));
+        if (index764 !== -1) {
+            logger.log(`     Neighbors of 48427764: ${allIds.slice(index764 - 2, index764 + 3).join(', ')}`);
+        }
+    }
 
     // Check for "Get Full Access" modal immediately
     await dismissBlockers(page);
@@ -366,8 +389,19 @@ async function extractPostData(page, url, logger = console, options = {}) {
             };
 
             const results = {};
+            const debug_skips = [];
+            const debug_found_target = [];
+
+            // Log if the target exists ANYWHERE
+            const target = document.getElementById('comment-group-48433511') || document.getElementById('comment-48433511');
+            if (target) {
+                debug_found_target.push(`Found 48433511: Tag=${target.tagName}, ID=${target.id}, ParentID=${target.parentElement?.id}, OffsetTop=${target.offsetTop}`);
+            }
+
             const groups = document.querySelectorAll('div[id^="comment-group-"]');
             for (const g of groups) {
+                if (g.id.includes('48433511')) debug_found_target.push(`Selector found group 48433511. InnerText: ${g.innerText.substring(0, 50)}`);
+
                 if (knownGroupIds.includes(g.id)) continue;
 
                 if (g.innerText.includes("Flagged by the community")) {
@@ -379,6 +413,7 @@ async function extractPostData(page, url, logger = console, options = {}) {
                         likes: "0",
                         images: [],
                         commentId: g.id.replace('comment-group-', ''),
+                        commentGroupId: g.id,
                         nestedCount: 0,
                         nested: [],
                         isFlagged: true
@@ -387,7 +422,10 @@ async function extractPostData(page, url, logger = console, options = {}) {
                 }
 
                 const rootComment = g.querySelector('div[id^="comment-"]:not([id^="comment-group-"])');
-                if (!rootComment) continue;
+                if (!rootComment) {
+                    debug_skips.push(`${g.id}: No root comment div found`);
+                    continue;
+                }
 
                 const header = rootComment.querySelector('.flex.flex-wrap.text-xs.font-semibold.text-gray-700');
                 results[g.id] = {
@@ -398,22 +436,39 @@ async function extractPostData(page, url, logger = console, options = {}) {
                     likes: rootComment.querySelector('button[aria-label*="Like"]')?.textContent?.trim() || "0",
                     images: Array.from(rootComment.querySelectorAll('img[src*="/uploads/atch_img/"]')).map(img => img.src),
                     commentId: rootComment.id,
+                    commentGroupId: g.id,
                     nestedCount: 0,
                     nested: []
                 };
             }
-            return results;
+            return { results, debug_skips, debug_found_target };
         }, { knownGroupIds: Object.keys(topLevelResults), scrapeTimeRaw: scrapeTimeRaw.getTime() });
 
-        const newCount = Object.keys(newGroups).length;
+        if (newGroups.debug_found_target && newGroups.debug_found_target.length > 0) {
+            newGroups.debug_found_target.forEach(msg => logger.log(`    🔍 DEBUG: ${msg}`));
+        }
+
+        if (newGroups.debug_skips && newGroups.debug_skips.length > 0) {
+            newGroups.debug_skips.forEach(skip => logger.log(`    ⚠️ Skipped: ${skip}`));
+        }
+
+        const capturedResults = newGroups.results;
+        const newCount = Object.keys(capturedResults).length;
         if (newCount > 0) {
-            Object.assign(topLevelResults, newGroups);
+            Object.keys(capturedResults).forEach(groupId => {
+                logger.log(`    → Discovered group: ${groupId}`);
+            });
+            Object.assign(topLevelResults, capturedResults);
             logger.log(`  ✓ Captured ${newCount} new top-level comments (total: ${Object.keys(topLevelResults).length})`);
         }
     };
 
     // OPTIMIZATION 1: Exhaust "View more comments" with adaptive waiting
     logger.log("⚡ Loading all top-level comments (optimized)...");
+
+    // Capture initial visible comments before any clicks (essential for virtualized lists)
+    await doCapture();
+
     let loadMoreVisible = true;
     let loadMoreAttempts = 0;
 
@@ -940,26 +995,19 @@ async function extractPostData(page, url, logger = console, options = {}) {
         const buildCommentTree = (groupElement) => {
             if (!groupElement) return [];
 
-            const commentsInGroup = Array.from(groupElement.querySelectorAll('div[id^="comment-"]:not([id^="comment-group-"])'));
+            // 1. Identify all nodes: regular comments AND flagged blocks
+            const regularComments = Array.from(groupElement.querySelectorAll('div[id^="comment-"]:not([id^="comment-group-"])'));
 
-            // Handle Flagged (if no comments found but group exists)
-            if (commentsInGroup.length === 0 && groupElement.innerText.includes("Flagged by the community")) {
-                return [{
-                    userName: "System",
-                    company: "Blind",
-                    date: "",
-                    content: "Flagged by the community.",
-                    likes: "0",
-                    images: [],
-                    commentId: groupElement.id.replace('comment-group-', ''),
-                    nestedCount: 0,
-                    nested: [],
-                    isFlagged: true
-                }];
-            }
+            // Find flagged blocks: These are divs containing "Flagged by the community"
+            const flaggedBlocks = Array.from(groupElement.querySelectorAll('div')).filter(el =>
+                el.children.length === 0 && el.innerText.includes("Flagged by the community")
+            );
 
-            // 1. Map comments to flat list with depths
-            const flatList = commentsInGroup.map(el => {
+            // Create a unified list of nodes with their depth and metadata
+            const allNodes = [];
+
+            // Add regular comments
+            regularComments.forEach(el => {
                 let depth = 0;
                 let current = el;
                 while (current && current !== groupElement) {
@@ -974,8 +1022,9 @@ async function extractPostData(page, url, logger = console, options = {}) {
                 const header = el.querySelector('.flex.flex-wrap.text-xs.font-semibold.text-gray-700');
                 const images = Array.from(el.querySelectorAll('img[src*="/uploads/atch_img/"]')).map(img => img.src);
 
-                return {
+                allNodes.push({
                     depth,
+                    offsetTop: el.offsetTop, // Use for sorting
                     data: {
                         userName: header?.querySelector('span:not(.text-gray-600)')?.textContent?.trim() || "Anonymous",
                         company: header?.querySelector('a[href^="/company/"]')?.textContent?.trim() || "",
@@ -984,18 +1033,54 @@ async function extractPostData(page, url, logger = console, options = {}) {
                         likes: el.querySelector('button[aria-label*="Like"]')?.textContent?.trim() || "0",
                         images,
                         commentId: el.id,
+                        commentGroupId: groupElement.id,
                         nestedCount: 0,
                         nested: []
                     }
-                };
+                });
             });
 
-            // 2. Build tree from flat list, injecting external results
+            // Add flagged blocks as virtual comments
+            flaggedBlocks.forEach(el => {
+                let depth = 0;
+                let current = el;
+                while (current && current !== groupElement) {
+                    const match = current.className?.match(/pl-\[(\d+)px\]/);
+                    if (match) {
+                        depth = parseInt(match[1], 10);
+                        break;
+                    }
+                    current = current.parentElement;
+                }
+
+                allNodes.push({
+                    depth,
+                    offsetTop: el.offsetTop,
+                    data: {
+                        userName: "System",
+                        company: "Blind",
+                        date: "",
+                        content: "Flagged by the community.",
+                        likes: "0",
+                        images: [],
+                        commentId: groupElement.id.replace('comment-group-', '') + "-flagged-" + el.offsetTop,
+                        commentGroupId: groupElement.id,
+                        nestedCount: 0,
+                        nested: [],
+                        isFlagged: true
+                    }
+                });
+            });
+
+            // 2. Sort all nodes by vertical position in the DOM
+            allNodes.sort((a, b) => a.offsetTop - b.offsetTop);
+
+            // 3. Build tree from sorted flat list, injecting external results
             const tree = [];
             const stack = [];
             let skipUntilDepth = -1;
 
-            flatList.forEach(item => {
+            allNodes.forEach(item => {
                 // If we are "inside" a comment that was satisfied by an external expansion, skip its DOM children
                 if (skipUntilDepth !== -1 && item.depth > skipUntilDepth) return;
                 skipUntilDepth = -1;
@@ -1006,7 +1091,7 @@ async function extractPostData(page, url, logger = console, options = {}) {
 
                 // IMPORTANT: If we have external expansion results for this comment, USE THEM
                 const external = externalThreadResults[item.data.commentId] || externalThreadResults[groupElement.id];
-                if (external && external.length > 0 && item.depth === flatList[0].depth) {
+                if (external && external.length > 0 && item.depth === (allNodes[0]?.depth || 0)) {
                     item.data.nested = external;
                     skipUntilDepth = item.depth;
                 } else if (externalThreadResults[item.data.commentId]) {
@@ -1083,6 +1168,21 @@ async function extractPostData(page, url, logger = console, options = {}) {
         };
         annotateNestedCount(replies);
 
+        // Collect all IDs for debug dictionary
+        const allCommentIds = [];
+        const collectIds = (list) => {
+            for (const item of list) {
+                allCommentIds.push({
+                    commentId: item.commentId,
+                    commentGroupId: item.commentGroupId
+                });
+                if (item.nested && item.nested.length > 0) {
+                    collectIds(item.nested);
+                }
+            }
+        };
+        collectIds(replies);
+
         return {
             scrapeTime: formattedScrapeTime,
             post_type: pollData?.post_type || "regular_post",
@@ -1093,10 +1193,16 @@ async function extractPostData(page, url, logger = console, options = {}) {
             poll: pollData,
             relatedCompanies, relatedTopics, replies,
             rescuedCount,
+            debug_mappings: allCommentIds
         };
     }, { externalThreadResults: threadResults, capturedTopLevelResults: topLevelResults, scrapeTimeRaw: scrapeTimeRaw.getTime(), formattedScrapeTime: scrapeTime });
 
-    data.debug = { ...data.debug, ...debug_info };
+    data.debug = {
+        ...data.debug,
+        ...debug_info,
+        all_comment_ids: data.debug_mappings
+    };
+    delete data.debug_mappings;
 
     // Log rescued comments if any
     if (data.rescuedCount > 0) {
