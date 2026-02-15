@@ -1,2 +1,2 @@
-...document.querySelectorAll('[id^="comment-group-"]')]
+[...document.querySelectorAll('[id^="comment-group-"]')]
   .map(el => el.id)

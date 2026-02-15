@@ -5,8 +5,14 @@ import path from "path";
 import https from "https";
 import { fileURLToPath } from "url";
 
-// Apply stealth plugin
-chromium.use(stealth());
+// Apply stealth plugin ONLY if login is not required
+const isLoginActive = process.argv.includes('--login') ||
+    process.argv.includes('--manual-login') ||
+    process.argv.includes('--login-wait');
+
+if (!isLoginActive) {
+    chromium.use(stealth());
+}
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const IN_FILE = process.argv[2] && fs.existsSync(process.argv[2])
@@ -91,52 +97,80 @@ function getFormattedScrapeTime() {
     return `${YYYY}-${MM}-${DD} ${hh}:${mm}`;
 }
 
-async function login(page) {
-    console.log("Attempting auto-login...");
-    try {
+async function login(page, options = {}) {
+    const { manual: forceManual = false, waitOnly = false } = options;
+
+    if (waitOnly) {
+        console.log("\n--------------------------------------------------");
+        console.log("👉 LOGIN WAIT MODE ENABLED.");
+        console.log("1. Opening home page...");
+        await page.goto("https://www.teamblind.com/", { waitUntil: "domcontentloaded" });
+        console.log("2. Please SIGN IN manually in the browser.");
+        console.log("3. Once you reach the home feed, the script will continue.");
+        console.log("--------------------------------------------------");
+    } else {
+        console.log("Attempting to load login page and populate credentials...");
         await page.goto("https://www.teamblind.com/login", { waitUntil: "domcontentloaded" });
 
-        // Try to fill form if selectors exist
+        // ALWAYS try to populate credentials to assist the user
         try {
-            await page.waitForSelector('input[name="email"]', { timeout: 15000 });
-            await page.fill('input[name="email"]', CREDENTIALS.email);
-            await page.fill('input[name="password"]', CREDENTIALS.password);
-            await page.click('button[type="submit"]');
-            console.log("Login form submitted. Waiting for redirection...");
+            // Broad selectors to handle potential UI changes
+            const emailSelector = 'input[name="email"], input[type="email"], input[placeholder*="Email" i]';
+            const passwordSelector = 'input[name="password"], input[type="password"], input[placeholder*="Password" i]';
+
+            await page.waitForSelector(emailSelector, { timeout: 15000 });
+
+            await page.locator(emailSelector).first().fill(CREDENTIALS.email);
+            await page.locator(passwordSelector).first().fill(CREDENTIALS.password);
+
+            console.log("   ✅ Credentials populated.");
         } catch (e) {
-            console.log("Login form not found or interaction failed. Specific error: " + e.message);
+            console.log("   ℹ Login form fields not found or already filled (timeout after 15s).");
         }
 
-        // Wait for successful login (URL change)
+        if (!forceManual) {
+            try {
+                await page.click('button[type="submit"]');
+                console.log("   🚀 Login form submitted. Waiting for redirection...");
+
+                await page.waitForFunction(() => {
+                    const url = window.location.href;
+                    return !url.includes('/login') && !url.includes('/sign-in') && !url.includes('/login-required');
+                }, { timeout: 15000 });
+
+                console.log("✅ Auto-login successful. Proceeding...");
+                return; // Success
+            } catch (e) {
+                console.log("   ⚠️ Auto-submit failed or manual intervention required:", e.message);
+            }
+        }
+
+        console.log("--------------------------------------------------");
+        console.log("👉 MANUAL LOGIN INTERVENTION:");
+        console.log("1. Please check the browser window.");
+        console.log("2. Credentials have been pre-filled for you.");
+        console.log("3. Solve any CAPTCHAs and click Submit.");
+        console.log("4. Once you reach the home feed, the script will continue.");
+        console.log("--------------------------------------------------");
+    }
+
+    // Common manual login wait logic - Exact mirror of greedy
+    console.log("   Waiting for login detection (URL matching active)...");
+    try {
+        page.setDefaultTimeout(0); // Infinite wait
         await page.waitForFunction(() => {
             const url = window.location.href;
             return !url.includes('/login') && !url.includes('/sign-in') && !url.includes('/login-required');
-        }, { timeout: 15000 });
+        }, { timeout: 0 });
 
-        console.log("Auto-login successful. Proceeding to scrape...");
-
-    } catch (e) {
-        console.log("\n⚠️ Auto-login failed or timed out (CAPTCHA?).");
-        console.log("👉 Please log in MANUALLY in the browser window now.");
-        console.log("🛑 DO NOT CLOSE THE BROWSER! The script needs it open to continue.");
-        console.log("   Waiting up to 10 minutes for you to log in...");
-
-        try {
-            // Give user 10 minutes to log in manually
-            await page.waitForFunction(() => {
-                const url = window.location.href;
-                return !url.includes('/login') && !url.includes('/sign-in') && !url.includes('/login-required');
-            }, { timeout: 600000 }); // 10 minutes
-
-            console.log("✅ Manual login detected! Resuming scraper...");
-        } catch (waitError) {
-            if (waitError.message.includes('Target page, context or browser has been closed')) {
-                console.error("\n❌ Browser was closed by user. Exiting...");
-                process.exit(1);
-            } else {
-                console.error("\n❌ Manual login timed out. Exiting...");
-                process.exit(1);
-            }
+        console.log("✅ Login detected. Proceeding to scrape...");
+    } catch (waitError) {
+        if (waitError.message.includes('Target page, context or browser has been closed')) {
+            console.error("\n❌ Browser closed. Exiting...");
+            process.exit(1);
+        } else {
+            console.error("\n❌ Manual login wait failed:", waitError.message);
+            process.exit(1);
         }
     }
 }
@@ -296,48 +330,51 @@ async function extractPostData(page, url, logger = console, options = {}) {
     // Wait for main content to appear
     await page.waitForSelector('h1', { timeout: 15000 });
 
-    // OPTIMIZATION: Hide sticky overlays/banners (DISABLED FOR DEBUG)
-    /*
-    await page.evaluate(() => {
-        const selectors = [
-            'section.sticky',
-            'div.sticky',
-            '[class*="sticky"]',
-            '[class*="Overlay"]',
-            '[class*="Modal"]',
-            '#onetrust-banner-sdk'
-        ];
-        selectors.forEach(s => {
-            const elements = document.querySelectorAll(s);
-            elements.forEach(el => {
-                const style = window.getComputedStyle(el);
-                if (style.position === 'fixed' || style.position === 'sticky') {
-                    el.style.display = 'none';
-                }
+    // OPTIMIZATION: Hide sticky overlays/banners that often block clicks
+    if (!options.verbose) {
+        await page.evaluate(() => {
+            const selectors = [
+                'section.sticky',
+                'div.sticky',
+                '[class*="sticky"]',
+                '[class*="Overlay"]',
+                '[class*="Modal"]',
+                '#onetrust-banner-sdk' // Common cookie banner
+            ];
+            selectors.forEach(s => {
+                const elements = document.querySelectorAll(s);
+                elements.forEach(el => {
+                    // Only hide if it's likely a bottom/top banner or overlay
+                    const style = window.getComputedStyle(el);
+                    if (style.position === 'fixed' || style.position === 'sticky') {
+                        el.style.display = 'none';
+                    }
+                });
             });
         });
-    });
-    */
+    }
 
-    // Wait for hydration
-    logger.log("  ℹ Waiting for hydration...");
-    await page.waitForTimeout(5000);
+    if (options.verbose) {
+        // Wait for hydration
+        logger.log("  ℹ [Verbose] Waiting for hydration...");
+        await page.waitForTimeout(5000);
 
-    // DEBUG: Log ALL IDs starting with comment-
-    const allIds = await page.evaluate(() => {
-        return Array.from(document.querySelectorAll('[id]'))
-            .map(el => el.id)
-            .filter(id => id.includes('comment-'));
-    });
-    logger.log(`  🔍 DEBUG: Found ${allIds.length} IDs containing 'comment-'.`);
-    if (allIds.some(id => id.includes('48433511'))) {
-        logger.log(`  ✅ DEBUG: Found 48433511 in global ID dump!`);
-    } else {
-        logger.log(`  ❌ DEBUG: 48433511 NOT in global ID dump.`);
-        // Log the IDs near 48427764
-        const index764 = allIds.findIndex(id => id.includes('48427764'));
-        if (index764 !== -1) {
-            logger.log(`     Neighbors of 48427764: ${allIds.slice(index764 - 2, index764 + 3).join(', ')}`);
+        // DEBUG: Log ALL IDs containing 'comment-'
+        const allIds = await page.evaluate(() => {
+            return Array.from(document.querySelectorAll('[id]'))
+                .map(el => el.id)
+                .filter(id => id.includes('comment-'));
+        });
+        logger.log(`  🔍 [Verbose] Found ${allIds.length} IDs containing 'comment-'.`);
+        if (allIds.some(id => id.includes('48433511'))) {
+            logger.log(`  ✅ [Verbose] Found 48433511 in global ID dump!`);
+        } else {
+            logger.log(`  ❌ [Verbose] 48433511 NOT in global ID dump.`);
+            // Log the IDs near 48427764
+            const index764 = allIds.findIndex(id => id.includes('48427764'));
+            if (index764 !== -1) {
+                logger.log(`     Neighbors of 48427764: ${allIds.slice(index764 - 2, index764 + 3).join(', ')}`);
+            }
         }
     }
 
@@ -358,7 +395,7 @@ async function extractPostData(page, url, logger = console, options = {}) {
     // Helper: capture new top-level comment groups from the DOM into topLevelResults
     const doCapture = async () => {
         if (!topLevelResults) return;
-        const newGroups = await page.evaluate(({ knownGroupIds, scrapeTimeRaw }) => {
+        const newGroups = await page.evaluate(({ knownGroupIds, scrapeTimeRaw, useVerbose }) => {
             const normalizeDateInternal = (dateStr) => {
                 if (!dateStr) return "";
                 const cleanStr = dateStr.trim().replace(/·/g, '').trim();
@@ -392,15 +429,17 @@ async function extractPostData(page, url, logger = console, options = {}) {
             const debug_skips = [];
             const debug_found_target = [];
 
-            // Log if the target exists ANYWHERE
-            const target = document.getElementById('comment-group-48433511') || document.getElementById('comment-48433511');
-            if (target) {
-                debug_found_target.push(`Found 48433511: Tag=${target.tagName}, ID=${target.id}, ParentID=${target.parentElement?.id}, OffsetTop=${target.offsetTop}`);
+            if (useVerbose) {
+                // Log if the target exists ANYWHERE
+                const target = document.getElementById('comment-group-48433511') || document.getElementById('comment-48433511');
+                if (target) {
+                    debug_found_target.push(`Found 48433511: Tag=${target.tagName}, ID=${target.id}, ParentID=${target.parentElement?.id}, OffsetTop=${target.offsetTop}`);
+                }
             }
 
             const groups = document.querySelectorAll('div[id^="comment-group-"]');
             for (const g of groups) {
-                if (g.id.includes('48433511')) debug_found_target.push(`Selector found group 48433511. InnerText: ${g.innerText.substring(0, 50)}`);
+                if (useVerbose && g.id.includes('48433511')) debug_found_target.push(`Selector found group 48433511. InnerText: ${g.innerText.substring(0, 50)}`);
 
                 if (knownGroupIds.includes(g.id)) continue;
 
@@ -442,7 +481,7 @@ async function extractPostData(page, url, logger = console, options = {}) {
                 };
             }
             return { results, debug_skips, debug_found_target };
-        }, { knownGroupIds: Object.keys(topLevelResults), scrapeTimeRaw: scrapeTimeRaw.getTime() });
+        }, { knownGroupIds: Object.keys(topLevelResults), scrapeTimeRaw: scrapeTimeRaw.getTime(), useVerbose: options.verbose });
 
         if (newGroups.debug_found_target && newGroups.debug_found_target.length > 0) {
             newGroups.debug_found_target.forEach(msg => logger.log(`    🔍 DEBUG: ${msg}`));
@@ -764,7 +803,7 @@ async function extractPostData(page, url, logger = console, options = {}) {
         // Poll might not exist
     }
 
-    const data = await page.evaluate(({ externalThreadResults, capturedTopLevelResults, scrapeTimeRaw, formattedScrapeTime }) => {
+    const data = await page.evaluate(({ externalThreadResults, capturedTopLevelResults, scrapeTimeRaw, formattedScrapeTime, useVerbose }) => {
         const getSafeText = (selector) => document.querySelector(selector)?.textContent?.trim() || "";
 
         const title = getSafeText("h1");
@@ -1195,7 +1234,7 @@ async function extractPostData(page, url, logger = console, options = {}) {
             rescuedCount,
             debug_mappings: allCommentIds
         };
-    }, { externalThreadResults: threadResults, capturedTopLevelResults: topLevelResults, scrapeTimeRaw: scrapeTimeRaw.getTime(), formattedScrapeTime: scrapeTime });
+    }, { externalThreadResults: threadResults, capturedTopLevelResults: topLevelResults, scrapeTimeRaw: scrapeTimeRaw.getTime(), formattedScrapeTime: scrapeTime, useVerbose: options.verbose });
 
     data.debug = {
         ...data.debug,
@@ -1235,11 +1274,14 @@ async function startScraping() {
         }
     }
 
-
     const usePersistentContext = process.argv.includes('--persistent');
     const useHeadless = process.argv.includes('--headless');
     const useCaptureTopLevel = process.argv.includes('--capture-toplevel');
     const useNewBrowser = process.argv.includes('--new-browser');
+    const useVerbose = process.argv.includes('--verbose');
+    const useLogin = process.argv.includes('--login');
+    const useManualLogin = process.argv.includes('--manual-login');
+    const useLoginWait = process.argv.includes('--login-wait');
     let browser, context;
 
     async function launchBrowserInstance() {
@@ -1271,18 +1313,21 @@ async function startScraping() {
         }
 
         // OPTIMIZATION: Block unnecessary resources to speed up page loads
-        await ctx.route('**/*', (route) => {
-            const url = route.request().url();
-            if (url.includes('google-analytics') ||
-                url.includes('googletagmanager') ||
-                url.includes('facebook.com/tr') ||
-                url.includes('.woff') ||
-                url.includes('.woff2')) {
-                route.abort();
-            } else {
-                route.continue();
-            }
-        });
+        // Bypassed if login is active to ensure CAPTCHAs and other assets load
+        if (!useLogin && !useManualLogin && !useLoginWait) {
+            await ctx.route('**/*', (route) => {
+                const url = route.request().url();
+                if (url.includes('google-analytics') ||
+                    url.includes('googletagmanager') ||
+                    url.includes('facebook.com/tr') ||
+                    url.includes('.woff') ||
+                    url.includes('.woff2')) {
+                    route.abort();
+                } else {
+                    route.continue();
+                }
+            });
+        }
 
         const pages = ctx.pages();
         const pg = pages.length > 0 ? pages[0] : await ctx.newPage();
@@ -1292,8 +1337,8 @@ async function startScraping() {
     let page;
     ({ browser, context, page } = await launchBrowserInstance());
 
-    if (SHOULD_LOGIN) {
-        await login(page);
+    if (useLogin || useManualLogin || useLoginWait) {
+        await login(page, { manual: useManualLogin, waitOnly: useLoginWait });
     } else {
         console.log("Skipping login as per configuration. Some content (polls, etc.) may be missing.");
     }
@@ -1318,7 +1363,8 @@ async function startScraping() {
         }
 
         // In new-browser mode, launch a fresh browser for each URL
-        if (useNewBrowser && urls.indexOf(url) > 0) {
+        // Bypassed if useLogin, useManualLogin or useLoginWait is true to maintain authenticated session
+        if (useNewBrowser && !useLogin && !useManualLogin && !useLoginWait && urls.indexOf(url) > 0) {
             console.log(`🔄 Launching new browser for: ${identifier}`);
             if (browser) await browser.close().catch(() => { });
             else await context.close().catch(() => { });
@@ -1357,7 +1403,8 @@ async function startScraping() {
                 };
 
                 const options = {
-                    captureTopLevel: useCaptureTopLevel
+                    captureTopLevel: useCaptureTopLevel,
+                    verbose: useVerbose
                 };
 
                 const data = await extractPostData(page, url, logger, options);
