@@ -315,10 +315,27 @@ async function extractPostData(page, url, logger = console, options = {}) {
     logger.log(`Processing (Optimized): ${url} at ${scrapeTime}`);
 
     // OPTIMIZATION: Check if already on the page (preserves Referer from organic scraper)
-    if (page.url() !== url && page.url() !== url + "/") {
-        await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000, referer: "https://www.teamblind.com/" });
-    } else {
-        logger.log("  ℹ Page already at target URL (Skipping navigation)");
+    try {
+        if (page.url() !== url && page.url() !== url + "/") {
+            // Reduced timeout to 20s to detect redirects/failures faster
+            await page.goto(url, { waitUntil: "domcontentloaded", timeout: 20000, referer: "https://www.teamblind.com/" });
+        } else {
+            logger.log("  ℹ Page already at target URL (Skipping navigation)");
+        }
+    } catch (e) {
+        logger.log(`  ⚠️ Navigation warning: ${e.message}`);
+    }
+
+    // Wait for potential client-side redirect (common for missing posts)
+    await page.waitForTimeout(3000);
+
+    // CHECK: If redirected to home page, the post is likely missing/deleted
+    // Use page.evaluate to get the true current URL if page.url() is stale
+    const currentUrl = await page.evaluate(() => window.location.href).catch(() => page.url());
+
+    if (currentUrl === "https://www.teamblind.com/" || currentUrl === "https://www.teamblind.com") {
+        logger.log("  🛑 Redirected to home page (Post likely deleted/missing).");
+        throw new Error("POST_NOT_FOUND_REDIRECT");
     }
 
     // Check for "Oops" error page immediately after navigation
@@ -1461,6 +1478,7 @@ async function startScraping() {
 
                 const data = await extractPostData(page, url, logger, options);
                 const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+                data.time_elapsed = elapsed;
 
                 // identifier and filePath are already defined in the outer scope
 
@@ -1483,6 +1501,12 @@ async function startScraping() {
                     }
 
                     await page.waitForTimeout(waitTime);
+                } else if (e.message === "POST_NOT_FOUND_REDIRECT") {
+                    console.error(`❌ Post not found (redirected to home): ${url}`);
+                    const missingFile = path.join(OUT_DIR, "missing_posts.txt");
+                    // Ensure newline is added
+                    fs.appendFileSync(missingFile, `${url}\n`);
+                    break; // Non-retryable
                 } else {
                     console.error(`❌ Error scraping ${url}:`, e.message);
                     break; // Non-retryable error
