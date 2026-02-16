@@ -619,9 +619,28 @@ async function extractPostData(page, url, logger = console, options = {}) {
             let btnInfo;
             try {
                 btnInfo = await btn.evaluate(node => {
-                    const comment = node.closest('div[id^="comment-"]');
+                    const group = node.closest('div[id^="comment-group-"]');
+                    if (!group) return null;
+
+                    // STRATEGY: Find the "Head of the Thread" (Real Parent)
+                    // 1. If this group starts with a real ID, that's our anchor.
+                    // 2. If it starts with a deleted placeholder, scan previous siblings until we find a real ID.
+                    let current = group;
+                    let realParentId = group.id;
+
+                    while (current) {
+                        const firstChildDiv = current.querySelector('div[id^="comment-"]:not([id^="comment-group-"])');
+                        if (firstChildDiv) {
+                            realParentId = firstChildDiv.id;
+                            break;
+                        }
+                        // Move to previous group sibling
+                        current = current.previousElementSibling;
+                        if (current && !current.id.startsWith('comment-group-')) break;
+                    }
+
                     return {
-                        id: comment ? comment.id : null,
+                        id: realParentId,
                         text: node.innerText.trim(),
                         isLink: node.tagName === 'A' || !!node.getAttribute('href') || !!node.closest('a')
                     };
@@ -630,11 +649,13 @@ async function extractPostData(page, url, logger = console, options = {}) {
                 continue;
             }
 
+            if (!btnInfo) continue;
+
             const key = btnInfo.id ? `${btnInfo.id}-${btnInfo.text}` : btnInfo.text;
             if (attemptedIds.has(key) || (!btnInfo.id && btnInfo.isLink)) continue;
 
             const currentUrl = page.url();
-            logger.log(`  ⚡ Expanding ${key}...`);
+            logger.log(`  ⚡ Expanding ${btnInfo.text} for ${btnInfo.id}...`);
 
             try {
                 // Use JS click for nested replies too
@@ -664,9 +685,6 @@ async function extractPostData(page, url, logger = console, options = {}) {
                 }
 
                 const threadData = await page.evaluate(({ scrapeTimeRaw }) => {
-                    const rootComment = document.querySelector('div[id^="comment-"]:not([id^="comment-group-"])');
-                    const actualId = rootComment ? rootComment.id : null;
-
                     const normalizeDateInternal = (dateStr) => {
                         if (!dateStr) return "";
                         const cleanStr = dateStr.trim().replace(/·/g, '').trim();
@@ -751,7 +769,49 @@ async function extractPostData(page, url, logger = console, options = {}) {
                             };
                         });
                     };
-                    return { id: actualId, replies: rootComment ? extractRepliesRecursive(rootComment) : [] };
+
+                    // NEW STRATEGY: Capture all root-level comments on this page
+                    const allCommentDivs = Array.from(document.querySelectorAll('div[id^="comment-"]:not([id^="comment-group-"])'));
+                    if (allCommentDivs.length === 0) return { id: null, replies: [] };
+
+                    // Find context: what is the shared parent or anchor?
+                    // On thread pages, the first few comments might be at a lower depth (context).
+                    // We want to return all comments as siblings IF they are truly siblings.
+
+                    const nodesWithDepth = allCommentDivs.map(el => {
+                        let depth = 0;
+                        let current = el;
+                        while (current && current.tagName !== 'BODY') {
+                            const match = current.className?.match(/pl-\[(\d+)px\]/);
+                            if (match) { depth = parseInt(match[1], 10); break; }
+                            current = current.parentElement;
+                        }
+                        return { el, depth };
+                    });
+
+                    const minDepth = Math.min(...nodesWithDepth.map(n => n.depth));
+                    const rootNodes = nodesWithDepth.filter(n => n.depth === minDepth);
+
+                    const results = rootNodes.map(node => {
+                        const el = node.el;
+                        const header = el.querySelector('.flex.flex-wrap.text-xs.font-semibold.text-gray-700');
+                        const images = Array.from(el.querySelectorAll('img[src*="/uploads/atch_img/"]')).map(img => img.src);
+                        const nestedReplies = extractRepliesRecursive(el);
+
+                        return {
+                            userName: header?.querySelector('span:not(.text-gray-600)')?.textContent?.trim() || "Anonymous",
+                            company: header?.querySelector('a[href^="/company/"]')?.textContent?.trim() || "",
+                            date: normalizeDateInternal(header?.querySelector('span.text-gray-600')?.textContent?.trim() || ""),
+                            content: el.querySelector('div.whitespace-pre-wrap, p')?.textContent?.trim() || "",
+                            likes: el.querySelector('button[aria-label*="Like"]')?.textContent?.trim() || "0",
+                            images,
+                            commentId: el.id,
+                            nestedCount: nestedReplies.length,
+                            nested: nestedReplies
+                        };
+                    });
+
+                    return { id: rootNodes[0].el.id, replies: results };
                 }, { scrapeTimeRaw: scrapeTimeRaw.getTime() });
 
                 if (threadData.id) {
@@ -1031,79 +1091,81 @@ async function extractPostData(page, url, logger = console, options = {}) {
             return { companyName, links };
         });
 
-        const buildCommentTree = (groupElement) => {
-            if (!groupElement) return [];
+        const buildUniversalTree = (rootCommentGroups) => {
+            if (!rootCommentGroups || rootCommentGroups.length === 0) return [];
 
-            // 1. Identify all significant nodes: regular comments AND flagged blocks
-            const allDivs = Array.from(groupElement.querySelectorAll('div'));
-            const relevantNodes = allDivs.filter(el => {
-                // Regular comment with ID
-                if (el.id && el.id.startsWith('comment-') && !el.id.startsWith('comment-group-')) return true;
-                // Flagged/Deleted placeholder (usually a div with specific text and no complex children)
-                if (el.children.length === 0 && /Flagged by the community|Deleted/i.test(el.innerText)) return true;
-                return false;
-            });
+            const allNodesInStream = [];
 
-            if (relevantNodes.length === 0) return [];
+            rootCommentGroups.forEach(groupElement => {
+                const allDivs = Array.from(groupElement.querySelectorAll('div'));
+                const relevantNodes = allDivs.filter(el => {
+                    if (el.id && el.id.startsWith('comment-') && !el.id.startsWith('comment-group-')) return true;
+                    if (el.children.length === 0 && /Flagged by the community|Deleted/i.test(el.innerText)) return true;
+                    return false;
+                });
 
-            // Create a unified list of nodes with their depth and metadata
-            const allNodes = [];
-
-            relevantNodes.forEach(el => {
-                let depth = 0;
-                let current = el;
-                // Detect depth based on indentation padding classes
-                while (current && current !== groupElement) {
-                    const match = current.className?.match(/pl-\[(\d+)px\]/);
-                    if (match) {
-                        depth = parseInt(match[1], 10);
+                // STRATEGY: Find the logical head for this group
+                let currentHeadId = groupElement.id;
+                let scanBack = groupElement;
+                while (scanBack) {
+                    const headComment = scanBack.querySelector('div[id^="comment-"]:not([id^="comment-group-"])');
+                    if (headComment) {
+                        currentHeadId = headComment.id;
                         break;
                     }
-                    current = current.parentElement;
+                    scanBack = scanBack.previousElementSibling;
+                    if (scanBack && !scanBack.id.startsWith('comment-group-')) break;
                 }
 
-                const isRegular = el.id && el.id.startsWith('comment-');
-                const header = el.querySelector('.flex.flex-wrap.text-xs.font-semibold.text-gray-700');
-                const images = isRegular ? Array.from(el.querySelectorAll('img[src*="/uploads/atch_img/"]')).map(img => img.src) : [];
-
-                allNodes.push({
-                    depth,
-                    offsetTop: el.offsetTop,
-                    data: {
-                        userName: isRegular ? (header?.querySelector('span:not(.text-gray-600)')?.textContent?.trim() || "Anonymous") : "System",
-                        company: isRegular ? (header?.querySelector('a[href^="/company/"]')?.textContent?.trim() || "") : "Blind",
-                        date: isRegular ? normalizeDateInternal(header?.querySelector('span.text-gray-600')?.textContent?.trim() || "") : "",
-                        content: isRegular ? (el.querySelector('div.whitespace-pre-wrap, p')?.textContent?.trim() || "") : (el.innerText.trim() || "Flagged by the community."),
-                        likes: isRegular ? (el.querySelector('button[aria-label*="Like"]')?.textContent?.trim() || "0") : "0",
-                        images,
-                        commentId: isRegular ? el.id : (groupElement.id.replace('comment-group-', '') + "-flagged-" + el.offsetTop),
-                        commentGroupId: groupElement.id,
-                        nestedCount: 0,
-                        nested: [],
-                        isFlagged: !isRegular
+                relevantNodes.forEach(el => {
+                    let depth = 0;
+                    let current = el;
+                    // Try class-based depth first, then visual left-offset
+                    while (current && current.tagName !== 'BODY') {
+                        const match = current.className?.match(/pl-\[(\d+)px\]/);
+                        if (match) {
+                            depth = parseInt(match[1], 10);
+                            break;
+                        }
+                        current = current.parentElement;
                     }
+                    if (depth === 0) {
+                        depth = Math.floor(el.getBoundingClientRect().left / 10); // Fallback to visual left
+                    }
+
+                    const isRegular = el.id && el.id.startsWith('comment-');
+                    const header = el.querySelector('.flex.flex-wrap.text-xs.font-semibold.text-gray-700');
+                    const images = isRegular ? Array.from(el.querySelectorAll('img[src*="/uploads/atch_img/"]')).map(img => img.src) : [];
+
+                    allNodesInStream.push({
+                        depth,
+                        offsetTop: el.getBoundingClientRect().top + window.scrollY,
+                        headId: currentHeadId,
+                        data: {
+                            userName: isRegular ? (header?.querySelector('span:not(.text-gray-600)')?.textContent?.trim() || "Anonymous") : "System",
+                            company: isRegular ? (header?.querySelector('a[href^="/company/"]')?.textContent?.trim() || "") : "Blind",
+                            date: isRegular ? normalizeDateInternal(header?.querySelector('span.text-gray-600')?.textContent?.trim() || "") : "",
+                            content: isRegular ? (el.querySelector('div.whitespace-pre-wrap, p')?.textContent?.trim() || "") : (el.innerText.trim() || "Flagged by the community."),
+                            likes: isRegular ? (el.querySelector('button[aria-label*="Like"]')?.textContent?.trim() || "0") : "0",
+                            images,
+                            commentId: isRegular ? el.id : (groupElement.id.replace('comment-group-', '') + "-flagged-" + Math.floor(el.getBoundingClientRect().top)),
+                            commentGroupId: groupElement.id,
+                            nestedCount: 0,
+                            nested: [],
+                            isFlagged: !isRegular
+                        }
+                    });
                 });
             });
 
-            // 2. Sort all nodes by vertical position in the DOM
-            allNodes.sort((a, b) => a.offsetTop - b.offsetTop);
+            // Sort all nodes globally by vertical position
+            allNodesInStream.sort((a, b) => a.offsetTop - b.offsetTop);
 
-            // IMPORTANT: Normalize depths so the first node (the root) is at depth 0
-            // This fixes issues where a thread is opened and every node has high absolute padding
-            if (allNodes.length > 0) {
-                const baseDepth = allNodes[0].depth;
-                allNodes.forEach(item => {
-                    item.depth = item.depth - baseDepth;
-                });
-            }
-
-            // 3. Build tree from sorted flat list, injecting external results
             const tree = [];
             const stack = [];
             let skipUntilDepth = -1;
 
-            allNodes.forEach(item => {
-                // If we are "inside" a comment that was satisfied by an external expansion, skip its DOM children
+            allNodesInStream.forEach(item => {
                 if (skipUntilDepth !== -1 && item.depth > skipUntilDepth) return;
                 skipUntilDepth = -1;
 
@@ -1111,13 +1173,21 @@ async function extractPostData(page, url, logger = console, options = {}) {
                     stack.pop();
                 }
 
-                // If we have external expansion results for this comment, USE THEM
-                const external = externalThreadResults[item.data.commentId] || externalThreadResults[groupElement.id];
-                if (external && external.length > 0 && item.depth === 0) {
-                    item.data.nested = external;
-                    skipUntilDepth = item.depth;
-                } else if (externalThreadResults[item.data.commentId]) {
-                    item.data.nested = externalThreadResults[item.data.commentId];
+                // Expansion injection with logical Head-ID support
+                const external = externalThreadResults[item.data.commentId] ||
+                    externalThreadResults[item.data.commentGroupId] ||
+                    externalThreadResults[item.headId];
+
+                if (external && external.length > 0) {
+                    // BOOT-REMOVAL: If the first result is just a duplicate of the parent (anchor), strip it
+                    // but keep its children and any other siblings found on the thread page.
+                    const duplication = external.find(ext => ext.commentId === item.data.commentId);
+                    if (duplication) {
+                        const otherSiblings = external.filter(ext => ext.commentId !== item.data.commentId);
+                        item.data.nested = [...(duplication.nested || []), ...otherSiblings];
+                    } else {
+                        item.data.nested = external;
+                    }
                     skipUntilDepth = item.depth;
                 }
 
@@ -1136,7 +1206,7 @@ async function extractPostData(page, url, logger = console, options = {}) {
             return !group.parentElement.closest('div[class*="pl-"]');
         });
 
-        const replies = rootCommentGroups.flatMap(group => buildCommentTree(group));
+        const replies = buildUniversalTree(rootCommentGroups);
 
         // Merge any top-level comments captured incrementally but no longer in the DOM
         let rescuedCount = 0;
