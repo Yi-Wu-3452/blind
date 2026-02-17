@@ -25,6 +25,8 @@ debug_extraction.log
 # Browser Profile
 browser_profile/
 
+browser_profile_collector/
+
 # Screenshots
 *.png
 

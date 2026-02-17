@@ -120,16 +120,24 @@ This document records the requirements provided by the user and the implementati
   - **Purpose**: Preserves top-level comment data before Phase 2 navigation, which can cause DOM state changes after `goBack()`.
 - **Verified**: Tested on `6-yoe-swe-looking-for-referrals-mt3f2xu0` — captured 11 top-level comments during Phase 1, 27/27 total comments matched metadata.
 
+### O. Robust Thread Expansion (Sibling Capture & Deduplication)
+- **Problem**: Thread expansion was only capturing the first comment on child pages and creating "self-nested" duplicates.
+- **Fix (Sibling Capture)**: Updated logic to identify all comments at the minimum visual depth on thread pages, ensuring no siblings are missed.
+- **Fix (Deduplication)**: Added a post-extraction check to remove the "anchor" parent from the expansion results, preventing the comment from appearing as its own first child.
+
+### P. Structural Integrity & Universal Tree Builder
+- **Problem**: Deleted comments split the DOM into separate `comment-group` containers, orphaning child comments.
+- **Fix (Backwards Scan)**: Implemented a scanner that looks back through previous group siblings to find the logical "head of the thread" even if it's a deleted placeholder.
+- **Fix (Universal Tree Builder)**: Rather than processing groups in isolation, the scraper now flattens all discovered comments, sorts them by vertical page position, and builds a hierarchy using a depth-stack algorithm.
+- **Result**: Complete, accurate nesting even when the DOM is fragmented by deleted content.
+
+### Q. Poll Result Hang Fix & Enhanced Extraction
+- **Problem**: The scraper would hang indefinitely when trying to click a disabled "View Result" button on polls.
+- **Fix (Safety Pre-check)**: Added a check for the `disabled` property and a 5-second timeout to the `click()` event.
+- **New Field: `isPollResultNotVisible`**: Added a boolean to track if results were hidden due to participating requirements.
+- **Extraction Enhancement**: Updated the data engine to capture percentages and vote counts for each poll option when visible.
+
 ## 3. Results
-- **URL 1**: [NVIDIA Poll](https://www.teamblind.com/post/is-nvidia-really-fcked-like-everyone-says-uakgdxh7)
-    - `post_type`: **"poll"**
-    - `participants`: **6484**
-- **URL 2**: [NVIDIA/Startup Offer](https://www.teamblind.com/post/nvidia-vs-startup-wh0rtba4)
-    - `post_type`: **"offer"**
-    - `option1_tc`: **"$550K"**
-    - `option1_base`: **"$300K"**
-    - `option1_equity`: **"$250K"**
-    - `option1_signOn`: **"-"**
-    - `option1_bonus`: **"-"**
-- **All Data**: Correctly integrated into the greedy expansion scraper to ensure 100% reply coverage.
-- **Image Extraction**: Successfully downloads and maps all images from posts and comments.
+- **NVIDIA Benchmark**: Successfully captured 191 comments on the NVIDIA CEO post, with correct nesting and 100% ID uniqueness (no duplicates).
+- **T-Mobile Polls**: Verified bypass of disabled poll buttons on the `offer-evaluation-help` post, saving data in ~11s without hanging.
+- **Scalability**: Confirmed the parallel worker pool strategy handles high-concurrency company scrapes while maintaining account safety.

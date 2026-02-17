@@ -868,19 +868,35 @@ async function extractPostData(page, url, logger = console, options = {}) {
         await page.waitForTimeout(300); // Reduced from 500ms
     }
 
+    let isPollResultNotVisible = false;
     // Click "View Result" on poll if present
     try {
         const viewResultBtn = await page.$('button:has-text("View Result")');
         if (viewResultBtn) {
-            logger.log("⚡ Revealing poll results...");
-            await viewResultBtn.click();
-            await page.waitForTimeout(800);
+            const isDisabled = await viewResultBtn.evaluate(node => node.disabled);
+            if (isDisabled) {
+                logger.log("  ℹ Poll results hidden or no participants. Skipping click.");
+                isPollResultNotVisible = true;
+            } else {
+                logger.log("⚡ Revealing poll results...");
+                await viewResultBtn.click({ timeout: 5000 }).catch(e => {
+                    logger.log(`  ⚠️ Failed to click poll: ${e.message}`);
+                    isPollResultNotVisible = true;
+                });
+                if (!isPollResultNotVisible) {
+                    await page.waitForTimeout(800);
+                }
+            }
+        } else {
+            // If there's no "View Result" button, it might be a poll we already voted on,
+            // or it might not be a poll at all. We'll check for poll container in evaluate.
         }
     } catch (e) {
-        // Poll might not exist
+        // Error during poll check
+        logger.log(`  ⚠️ Error checking poll: ${e.message}`);
     }
 
-    const data = await page.evaluate(({ externalThreadResults, capturedTopLevelResults, scrapeTimeRaw, formattedScrapeTime, useVerbose }) => {
+    const data = await page.evaluate(({ externalThreadResults, capturedTopLevelResults, scrapeTimeRaw, formattedScrapeTime, useVerbose, isPollResultNotVisible }) => {
         const getSafeText = (selector) => document.querySelector(selector)?.textContent?.trim() || "";
 
         const title = getSafeText("h1");
@@ -890,6 +906,7 @@ async function extractPostData(page, url, logger = console, options = {}) {
         const postImages = Array.from(document.querySelectorAll('img[src*="/uploads/atch_img/"]'))
             .filter(img => !img.closest('div[id^="comment-"]'))
             .map(img => img.src);
+
 
         const channel = getSafeText('a[data-testid="article-preview-channel"]');
         const rawDate = document.querySelector('a[data-testid="article-preview-channel"]')?.parentElement?.querySelector('span')?.textContent?.trim() || "";
@@ -1298,12 +1315,14 @@ async function extractPostData(page, url, logger = console, options = {}) {
             scrapedCommentsCount,
             deletedCommentsCount, // Count of isFlagged comments in the tree
             images: postImages,
-            poll: pollData,
+            poll: isPollResultNotVisible ? null : pollData,
             relatedCompanies, relatedTopics, replies,
             rescuedCount,
+            debug: useVerbose ? debug_info : undefined,
+            isPollResultNotVisible: pollContainer ? isPollResultNotVisible : undefined,
             debug_mappings: allCommentIds
         };
-    }, { externalThreadResults: threadResults, capturedTopLevelResults: topLevelResults, scrapeTimeRaw: scrapeTimeRaw.getTime(), formattedScrapeTime: scrapeTime, useVerbose: options.verbose });
+    }, { externalThreadResults: threadResults, capturedTopLevelResults: topLevelResults, scrapeTimeRaw: scrapeTimeRaw.getTime(), formattedScrapeTime: scrapeTime, useVerbose: options.verbose, isPollResultNotVisible });
 
     data.debug = {
         ...data.debug,
