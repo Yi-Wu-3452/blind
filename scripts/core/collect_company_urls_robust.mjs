@@ -23,6 +23,8 @@ const startPage = parseInt(args.find(arg => arg.startsWith("--start-page="))?.sp
 const shouldLogin = args.includes("--login");
 const shouldManualLogin = args.includes("--manual-login");
 const isHeadless = args.includes("--headless");
+const scrollCount = parseInt(args.find(arg => arg.startsWith("--scroll-count="))?.split("=")[1] || "3");
+const sortOption = args.find(arg => arg.startsWith("--sort="))?.split("=")[1];
 
 const userArgIndex = args.indexOf('--user');
 const passArgIndex = args.indexOf('--pass');
@@ -44,11 +46,11 @@ if (shouldLogin && userArgIndex === -1) {
 
 function printUsage() {
     console.log("Usage:");
-    console.log("  node scripts/core/collect_company_urls.mjs --company=<CompanyName> [--out=<output_file>] [--start-page=<n>] [--login] [--manual-login] [--headless] [--user <email>] [--pass <password>]");
-    console.log("  node scripts/core/collect_company_urls.mjs --url=<TargetURL> [--out=<output_file>] [--start-page=<n>] [--login] [--manual-login] [--headless] [--user <email>] [--pass <password>]");
+    console.log("  node scripts/core/collect_company_urls_robust.mjs --company=<CompanyName> [--out=<output_file>] [--start-page=<n>] [--scroll-count=<n>] [--sort=<option>] [--login] [--manual-login] [--headless] [--user <email>] [--pass <password>]");
+    console.log("  node scripts/core/collect_company_urls_robust.mjs --url=<TargetURL> [--out=<output_file>] [--start-page=<n>] [--scroll-count=<n>] [--sort=<option>] [--login] [--manual-login] [--headless] [--user <email>] [--pass <password>]");
     console.log("\nExamples:");
-    console.log("  node scripts/core/collect_company_urls.mjs --company=Fox");
-    console.log("  node scripts/core/collect_company_urls.mjs --url=https://www.teamblind.com/company/Fox/posts");
+    console.log("  node scripts/core/collect_company_urls_robust.mjs --company=Fox");
+    console.log("  node scripts/core/collect_company_urls_robust.mjs --url=https://www.teamblind.com/company/Fox/posts");
 }
 
 if (!companyName && !targetUrl) {
@@ -57,7 +59,10 @@ if (!companyName && !targetUrl) {
     process.exit(1);
 }
 
-const COMPANY_POSTS_URL = targetUrl || `https://www.teamblind.com/company/${companyName}/posts`;
+let COMPANY_POSTS_URL = targetUrl || `https://www.teamblind.com/company/${companyName}/posts`;
+if (sortOption && !targetUrl) {
+    COMPANY_POSTS_URL += `?sort=${sortOption}`;
+}
 
 if (!outFile) {
     const name = companyName || "company_posts";
@@ -93,7 +98,6 @@ async function login(page, options = {}) {
 
         // ALWAYS try to populate credentials to assist the user
         try {
-            // Broad selectors to handle potential UI changes
             const emailSelector = 'input[name="email"], input[type="email"], input[placeholder*="Email" i]';
             const passwordSelector = 'input[name="password"], input[type="password"], input[placeholder*="Password" i]';
 
@@ -109,7 +113,6 @@ async function login(page, options = {}) {
 
         if (!forceManual) {
             try {
-                // Try multiple sign-in button selectors
                 const submitBtn = await page.locator('button[type="submit"], button:has-text("Sign in"), button.bg-black').first();
                 await submitBtn.click();
                 console.log("   🚀 Login form submitted. Waiting for redirection...");
@@ -135,7 +138,6 @@ async function login(page, options = {}) {
         console.log("--------------------------------------------------");
     }
 
-    // Common manual login wait logic
     console.log("   Waiting for login detection (URL matching active)...");
     try {
         page.setDefaultTimeout(0); // Infinite wait
@@ -157,7 +159,6 @@ async function login(page, options = {}) {
 }
 
 async function collectUrls() {
-    // Use a persistent profile for login, unique for anonymous collection
     let userDataDir;
     if (shouldLogin || shouldManualLogin) {
         userDataDir = path.resolve(__dirname, `../../browser_profile`);
@@ -167,27 +168,23 @@ async function collectUrls() {
     }
     if (!fs.existsSync(userDataDir)) fs.mkdirSync(userDataDir, { recursive: true });
 
-    // Ensure output directory exists
     const outDir = path.dirname(outFile);
     if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
 
-    console.log(`🚀 Launching Scraper (System Chrome, No Stealth).`);
+    console.log(`🚀 Launching Robust Scraper.`);
     console.log(`🎯 Target URL: ${COMPANY_POSTS_URL}`);
     console.log(`📂 Output File: ${outFile}`);
     console.log(`📂 Profile: ${userDataDir}`);
 
     const context = await chromium.launchPersistentContext(userDataDir, {
-        // channel: 'chrome', // Use bundled chromium instead of system chrome for stability
         headless: isHeadless,
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
-            // '--disable-infobars', // removing this just in case
             '--window-position=0,0',
             '--ignore-certificate-errors',
             '--ignore-certificate-errors-spki-list',
             '--window-size=1280,800',
-            // '--user-agent=...' // Let playwright set default UA or use a simpler one if needed
         ],
         viewport: null
     });
@@ -200,10 +197,10 @@ async function collectUrls() {
 
     let currentPage = startPage;
     let pagesWithNoNewUrls = 0;
-    const patienceLimit = 5; // Stop after 5 consecutive pages with no new URLs
+    const patienceLimit = 5;
     const seenInFile = new Set();
-    const seenInThisRun = new Map(); // Track url -> firstPageSeen
-    const duplicateUrls = []; // Track actual repeats: { url, firstPage, duplicatePage }
+    const seenInThisRun = new Map();
+    const duplicateUrls = [];
 
     if (fs.existsSync(outFile)) {
         fs.readFileSync(outFile, "utf-8").split("\n").forEach(url => {
@@ -213,24 +210,44 @@ async function collectUrls() {
 
     while (true) {
         console.log(`Fetching page ${currentPage}...`);
-        const pageUrl = `${COMPANY_POSTS_URL}?page=${currentPage}`;
+        let pageUrl = COMPANY_POSTS_URL;
+
+        if (pageUrl.includes("?")) {
+            pageUrl += `&page=${currentPage}`;
+        } else {
+            pageUrl += `?page=${currentPage}`;
+        }
 
         try {
-            await page.goto(pageUrl, { waitUntil: "domcontentloaded", timeout: 30000 });
+            await page.goto(pageUrl, { waitUntil: "domcontentloaded", timeout: 45000 }); // Increased timeout
         } catch (e) {
             console.error(`Error navigating to ${pageUrl}: ${e.message}`);
             console.log("Retrying once...");
             await page.reload({ waitUntil: "domcontentloaded" });
         }
 
-        // Wait for potential dynamic content (Wait longer for articles to appear)
+        // --- ROBUST SCROLLING ---
+        console.log(`   📜 Scrolling ${scrollCount} times to ensure all posts load...`);
         try {
-            await page.waitForSelector("article a[href*='/post/']", { timeout: 15000 });
+            // Scroll down multiple times to trigger lazy loading
+            for (let i = 0; i < scrollCount; i++) {
+                await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+                await page.waitForTimeout(1500);
+            }
+            await page.evaluate(() => window.scrollTo(0, 0)); // Scroll back up slightly just in case (optional)
         } catch (e) {
-            console.log("   ⚠️ Timeout waiting for post links (15s). Feed might be slow. Retrying reload...");
+            console.log("   ⚠️ Error during scroll: " + e.message);
+        }
+
+        // Wait for selectors with increased timeout
+        try {
+            await page.waitForSelector("article a[href*='/post/']", { timeout: 20000 });
+        } catch (e) {
+            console.log("   ⚠️ Timeout waiting for post links (20s). Retrying reload...");
             await page.reload({ waitUntil: "domcontentloaded" });
             try {
-                await page.waitForSelector("article a[href*='/post/']", { timeout: 10000 });
+                await page.waitForTimeout(3000); // Hard wait after reload
+                await page.waitForSelector("article a[href*='/post/']", { timeout: 15000 });
             } catch (retryError) {
                 console.log("   ❌ Still no post links after reload. Main feed might be empty.");
                 const screenshotPath = path.resolve(outDir, `error_page_${currentPage}.png`);
@@ -250,7 +267,7 @@ async function collectUrls() {
 
         let newUrlsFound = false;
         for (const url of urls) {
-            const cleanUrl = url.split("?")[0]; // Remove query params
+            const cleanUrl = url.split("?")[0];
 
             // 1. Is it a duplicate in THIS run?
             if (seenInThisRun.has(cleanUrl)) {
@@ -281,13 +298,11 @@ async function collectUrls() {
 
         console.log(`Page ${currentPage}: Found ${urls.length} links, ${newUrlsFound ? "some new" : "no new"} URLs.`);
 
-        // Stop if we've seen multiple pages with no new URLs (to avoid infinite loops)
         if (pagesWithNoNewUrls >= patienceLimit) {
             console.log(`\nStopping: Reached patience limit of ${patienceLimit} pages with no new URLs.`);
             break;
         }
 
-        // Check for redirect back to first page or other pagination anomalies
         const currentUrl = page.url();
         if (currentPage > 1 && !currentUrl.includes(`page=${currentPage}`)) {
             console.log("Redirected away from requested page. Assuming end of pagination.");
@@ -296,16 +311,22 @@ async function collectUrls() {
 
         currentPage++;
 
-        // Random delay between 2-5 seconds
-        const delay = Math.floor(Math.random() * 3000) + 2000;
+        // Increased delay between pages
+        const delay = Math.floor(Math.random() * 3000) + 3000;
         await page.waitForTimeout(delay);
     }
 
     await context.close();
 
-    // Save duplicates to JSON
+    // Save duplicates to JSON - FIXED FILENAME LOGIC
     if (duplicateUrls.length > 0) {
-        const dupFile = outFile.replace("_post_urls.txt", "_duplicates.json");
+        let dupFile;
+        if (outFile.endsWith(".txt")) {
+            dupFile = outFile.replace(".txt", "_duplicates.json");
+        } else {
+            dupFile = outFile + "_duplicates.json";
+        }
+
         fs.writeFileSync(dupFile, JSON.stringify(duplicateUrls, null, 2));
         console.log(`📂 Saved ${duplicateUrls.length} duplicate encounters to ${dupFile}`);
     }

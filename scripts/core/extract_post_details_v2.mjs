@@ -21,9 +21,12 @@ const IN_FILE = process.argv[2] && fs.existsSync(process.argv[2])
 const OUT_DIR = process.argv[3]
     ? path.resolve(process.argv[3])
     : path.resolve(__dirname, "../../data/posts_optimized");
+const userArgIndex = process.argv.indexOf('--user');
+const passArgIndex = process.argv.indexOf('--pass');
+
 const CREDENTIALS = {
-    email: "fortestblind2026@gmail.com",
-    password: "fortest00001!"
+    email: userArgIndex !== -1 && process.argv[userArgIndex + 1] ? process.argv[userArgIndex + 1] : "fortestblind2026@gmail.com",
+    password: passArgIndex !== -1 && process.argv[passArgIndex + 1] ? process.argv[passArgIndex + 1] : "fortest00001!"
 };
 
 const SHOULD_LOGIN = false;
@@ -194,7 +197,7 @@ async function downloadFile(url, dest) {
 }
 
 async function downloadAllImages(data, postUrl, logger = console) {
-    const imagesDir = path.resolve(__dirname, "../../data/images");
+    const imagesDir = path.resolve(OUT_DIR, "images");
     if (!fs.existsSync(imagesDir)) fs.mkdirSync(imagesDir, { recursive: true });
 
     const postSlug = postUrl.split("/").pop();

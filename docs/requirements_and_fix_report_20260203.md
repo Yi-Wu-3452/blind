@@ -141,3 +141,11 @@ This document records the requirements provided by the user and the implementati
 - **NVIDIA Benchmark**: Successfully captured 191 comments on the NVIDIA CEO post, with correct nesting and 100% ID uniqueness (no duplicates).
 - **T-Mobile Polls**: Verified bypass of disabled poll buttons on the `offer-evaluation-help` post, saving data in ~11s without hanging.
 - **Scalability**: Confirmed the parallel worker pool strategy handles high-concurrency company scrapes while maintaining account safety.
+
+### R. Recent Sort Strategy for Completeness (2026-02-18)
+- **Discovery**: Traditional "Top" sorting (default) misses a significant number of posts, likely due to algorithmic ranking burying older or less engaged content.
+- **Fix**: Implemented `--sort=recent` parameter in `collect_company_urls_robust.mjs`.
+- **Results**:
+    - **Fox**: Found **778** URLs vs **761** with default sort (+17 unique posts).
+    - **Booking.com**: Found **915** URLs vs **901** with default sort (+14 unique posts).
+- **Conclusion**: Sorting by "Recent" provides a strictly better and more complete dataset, effectively capturing the "long tail" of posts that the default view hides.
