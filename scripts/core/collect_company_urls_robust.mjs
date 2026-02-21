@@ -25,6 +25,7 @@ const shouldManualLogin = args.includes("--manual-login");
 const isHeadless = args.includes("--headless");
 const scrollCount = parseInt(args.find(arg => arg.startsWith("--scroll-count="))?.split("=")[1] || "3");
 const sortOption = args.find(arg => arg.startsWith("--sort="))?.split("=")[1];
+const useSimpleRetry = args.includes("--simple-retry");
 
 const userArgIndex = args.indexOf('--user');
 const passArgIndex = args.indexOf('--pass');
@@ -46,8 +47,8 @@ if (shouldLogin && userArgIndex === -1) {
 
 function printUsage() {
     console.log("Usage:");
-    console.log("  node scripts/core/collect_company_urls_robust.mjs --company=<CompanyName> [--out=<output_file>] [--start-page=<n>] [--scroll-count=<n>] [--sort=<option>] [--login] [--manual-login] [--headless] [--user <email>] [--pass <password>]");
-    console.log("  node scripts/core/collect_company_urls_robust.mjs --url=<TargetURL> [--out=<output_file>] [--start-page=<n>] [--scroll-count=<n>] [--sort=<option>] [--login] [--manual-login] [--headless] [--user <email>] [--pass <password>]");
+    console.log("  node scripts/core/collect_company_urls_robust.mjs --company=<CompanyName> [--out=<output_file>] [--start-page=<n>] [--scroll-count=<n>] [--sort=<option>] [--login] [--manual-login] [--headless] [--user <email>] [--pass <password>] [--simple-retry]");
+    console.log("  node scripts/core/collect_company_urls_robust.mjs --url=<TargetURL> [--out=<output_file>] [--start-page=<n>] [--scroll-count=<n>] [--sort=<option>] [--login] [--manual-login] [--headless] [--user <email>] [--pass <password>] [--simple-retry]");
     console.log("\nExamples:");
     console.log("  node scripts/core/collect_company_urls_robust.mjs --company=Fox");
     console.log("  node scripts/core/collect_company_urls_robust.mjs --url=https://www.teamblind.com/company/Fox/posts");
@@ -158,6 +159,26 @@ async function login(page, options = {}) {
     }
 }
 
+async function checkRateLimit(page) {
+    try {
+        const errorText = await page.evaluate(() => {
+            const bodyText = document.body.innerText;
+            if (bodyText.includes("Oops! Something went wrong") && bodyText.includes("blindapp@teamblind.com")) {
+                return true;
+            }
+            return false;
+        });
+
+        if (errorText) {
+            console.log("   🛑 Detected Blind Error Page (Rate Limit?).");
+            return true;
+        }
+    } catch (e) {
+        // Ignore errors during check
+    }
+    return false;
+}
+
 async function collectUrls() {
     let userDataDir;
     if (shouldLogin || shouldManualLogin) {
@@ -218,12 +239,40 @@ async function collectUrls() {
             pageUrl += `?page=${currentPage}`;
         }
 
-        try {
-            await page.goto(pageUrl, { waitUntil: "domcontentloaded", timeout: 45000 }); // Increased timeout
-        } catch (e) {
-            console.error(`Error navigating to ${pageUrl}: ${e.message}`);
-            console.log("Retrying once...");
-            await page.reload({ waitUntil: "domcontentloaded" });
+        let success = false;
+        let retryCount = 0;
+        const maxRetries = useSimpleRetry ? 1 : 9;
+        const retryInterval = 10000;
+
+        while (retryCount <= maxRetries && !success) {
+            try {
+                await page.goto(pageUrl, { waitUntil: "domcontentloaded", timeout: 45000 });
+                const isRateLimited = await checkRateLimit(page);
+                if (isRateLimited) {
+                    throw new Error("RATE_LIMITED");
+                }
+                success = true;
+            } catch (e) {
+                retryCount++;
+                if (retryCount > maxRetries) {
+                    console.error(`❌ Permanent failure for page ${currentPage} after ${maxRetries} retries: ${e.message}`);
+                    const screenshotPath = path.resolve(outDir, `error_page_${currentPage}_permanent.png`);
+                    await page.screenshot({ path: screenshotPath }).catch(() => { });
+                    break;
+                }
+
+                console.log(`⚠️ ${e.message.includes("RATE_LIMITED") ? "Rate limited" : "Timeout"}. Retry ${retryCount}/${maxRetries} for page ${currentPage}...`);
+                if (e.message.includes("RATE_LIMITED")) {
+                    // Try to "unstick" by going to home page
+                    await page.goto("https://www.teamblind.com/", { waitUntil: "domcontentloaded" }).catch(() => { });
+                }
+                await page.waitForTimeout(retryInterval);
+            }
+        }
+
+        if (!success) {
+            console.log(`Stopping due to permanent failure on page ${currentPage}.`);
+            break;
         }
 
         // --- ROBUST SCROLLING ---
@@ -239,19 +288,25 @@ async function collectUrls() {
             console.log("   ⚠️ Error during scroll: " + e.message);
         }
 
-        // Wait for selectors with increased timeout
+        // Wait for selectors
         try {
             await page.waitForSelector("article a[href*='/post/']", { timeout: 20000 });
         } catch (e) {
-            console.log("   ⚠️ Timeout waiting for post links (20s). Retrying reload...");
+            const isRateLimited = await checkRateLimit(page);
+            if (isRateLimited) {
+                console.log("   ⚠️ Rate limited detected during selector wait.");
+            } else {
+                console.log("   ⚠️ Timeout waiting for post links (20s). Retrying reload...");
+            }
+
             await page.reload({ waitUntil: "domcontentloaded" });
             try {
                 await page.waitForTimeout(3000); // Hard wait after reload
                 await page.waitForSelector("article a[href*='/post/']", { timeout: 15000 });
             } catch (retryError) {
-                console.log("   ❌ Still no post links after reload. Main feed might be empty.");
-                const screenshotPath = path.resolve(outDir, `error_page_${currentPage}.png`);
-                await page.screenshot({ path: screenshotPath });
+                console.log("   ❌ Still no post links after reload. Main feed might be empty or blocked.");
+                const screenshotPath = path.resolve(outDir, `error_page_${currentPage}_content.png`);
+                await page.screenshot({ path: screenshotPath }).catch(() => { });
                 console.log(`      Saved screenshot to ${screenshotPath}`);
             }
         }

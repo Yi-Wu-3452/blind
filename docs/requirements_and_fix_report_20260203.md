@@ -149,3 +149,23 @@ This document records the requirements provided by the user and the implementati
     - **Fox**: Found **778** URLs vs **761** with default sort (+17 unique posts).
     - **Booking.com**: Found **915** URLs vs **901** with default sort (+14 unique posts).
 - **Conclusion**: Sorting by "Recent" provides a strictly better and more complete dataset, effectively capturing the "long tail" of posts that the default view hides.
+
+### S. Block Quantile & Rate Limit Analysis (2026-02-19)
+- **Objective**: Determine empirically when Blind's anti-bot mechanism intervenes during high-volume scrapes.
+- **Metrics (T-Mobile Dataset)**:
+    - **Bulk Historical Scrape (1,691 posts)**: 
+        - First block encountered at post **#464**.
+        - Block Quantile: **~27%**.
+    - **Focused Incremental Scrape (57 posts)**:
+        - First block encountered at post **#5**.
+        - Block Quantile: **~9%**.
+- **Insights**:
+    - **Cumulative Penalty**: The mechanism uses a "warm-up" or cumulative scoring system. In the second run, the threshold was 3x lower because it followed an intensive URL collection phase.
+    - **Resource Context**: URL collection (scrolling lists) is significantly safer than content extraction (opening pages/expanding comments), which triggers blocks instantly.
+- **Mitigation**: Confirmed that the **Exponential Backoff** (20s -> 40s -> 60s/80s) successfully bypasses these blocks without manual intervention.
+- **Recovery Breakdown (221 Blocked Posts)**:
+    - **Success at Retry 1 (20s delay)**: 16 posts (**7.2%**).
+    - **Success at Retry 2 (40s delay)**: 178 posts (**80.5%**).
+    - **Success at Retry 3 (80s delay)**: 27 posts (**12.2%**).
+    - **Permanent Failures**: 0 posts (**0%**).
+- **Finding**: A **40-second delay** is the critical recovery point for Blind's rate limits.

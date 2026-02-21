@@ -9,6 +9,7 @@ import { fileURLToPath } from "url";
 const isLoginActive = process.argv.includes('--login') ||
     process.argv.includes('--manual-login') ||
     process.argv.includes('--login-wait');
+const usePrevRetry = process.argv.includes('--prev-retry');
 
 if (!isLoginActive) {
     chromium.use(stealth());
@@ -1463,7 +1464,8 @@ async function startScraping() {
         }
 
         let retryCount = 0;
-        const maxRetries = 3;
+        const maxRetries = usePrevRetry ? 3 : 9;
+        const retryInterval = 10000; // Only used for granular
         let success = false;
 
         while (retryCount <= maxRetries && !success) {
@@ -1514,15 +1516,23 @@ async function startScraping() {
             } catch (e) {
                 if (e.message === "RATE_LIMITED" || e.message.includes("Timeout")) {
                     retryCount++;
-                    const waitTime = Math.pow(2, retryCount) * 10000; // Exponential backoff: 20s, 40s, 80s
-                    console.log(`⚠️ ${e.message === "RATE_LIMITED" ? "Rate limited" : "Timeout"}. Retry ${retryCount}/${maxRetries} in ${waitTime / 1000}s...`);
+                    const accumulatedWait = (retryCount * retryInterval) / 1000;
+
+                    if (retryCount > maxRetries) {
+                        console.error(`❌ Permanent failure for ${url} after 90s. Saving to failure list.`);
+                        const failedFile = path.join(OUT_DIR, "failed_post_urls.txt");
+                        fs.appendFileSync(failedFile, `${url}\n`);
+                        break;
+                    }
+
+                    console.log(`⚠️ ${e.message === "RATE_LIMITED" ? "Rate limited" : "Timeout"}. Retry ${retryCount}/${maxRetries} (${accumulatedWait}s/90s)...`);
 
                     if (e.message === "RATE_LIMITED") {
                         // If rate limited, try to "unstick" by going to home page
                         await page.goto("https://www.teamblind.com/", { waitUntil: "domcontentloaded" }).catch(() => { });
                     }
 
-                    await page.waitForTimeout(waitTime);
+                    await page.waitForTimeout(retryInterval);
                 } else if (e.message === "POST_NOT_FOUND_REDIRECT") {
                     console.error(`❌ Post not found (redirected to home): ${url}`);
                     const missingFile = path.join(OUT_DIR, "missing_posts.txt");
