@@ -21,9 +21,46 @@ const IN_FILE = process.argv[2] && fs.existsSync(process.argv[2])
 const OUT_DIR = process.argv[3]
     ? path.resolve(process.argv[3])
     : path.resolve(__dirname, "../../data/posts_optimized");
-const CREDENTIALS = {
+const userArgIndex = process.argv.indexOf('--user');
+const passArgIndex = process.argv.indexOf('--pass');
+const accArgIndex = process.argv.indexOf('--account');
+
+const CRED_FILE = path.resolve(__dirname, "../../credentials.json");
+let loadedCredentials = {
     email: "fortestblind2026@gmail.com",
     password: "fortest00001!"
+};
+
+if (fs.existsSync(CRED_FILE)) {
+    try {
+        const creds = JSON.parse(fs.readFileSync(CRED_FILE, 'utf8'));
+        if (accArgIndex !== -1 && process.argv[accArgIndex + 1]) {
+            const accKey = process.argv[accArgIndex + 1];
+            if (creds[accKey]) {
+                loadedCredentials = creds[accKey];
+            } else {
+                console.warn(`⚠️ Account index "${accKey}" not found in credentials.json. Using default.`);
+            }
+        } else if (userArgIndex !== -1 && process.argv[userArgIndex + 1]) {
+            // Check if email match in JSON
+            const found = Object.values(creds).find(c => c.email === process.argv[userArgIndex + 1]);
+            if (found) {
+                loadedCredentials = found;
+            } else {
+                loadedCredentials.email = process.argv[userArgIndex + 1];
+                if (passArgIndex !== -1 && process.argv[passArgIndex + 1]) {
+                    loadedCredentials.password = process.argv[passArgIndex + 1];
+                }
+            }
+        }
+    } catch (e) {
+        console.error("❌ Error loading credentials.json:", e.message);
+    }
+}
+
+const CREDENTIALS = {
+    email: userArgIndex !== -1 && process.argv[userArgIndex + 1] ? process.argv[userArgIndex + 1] : loadedCredentials.email,
+    password: passArgIndex !== -1 && process.argv[passArgIndex + 1] ? process.argv[passArgIndex + 1] : loadedCredentials.password
 };
 
 const SHOULD_LOGIN = false;

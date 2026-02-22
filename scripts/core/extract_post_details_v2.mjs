@@ -24,10 +24,44 @@ const OUT_DIR = process.argv[3]
     : path.resolve(__dirname, "../../data/posts_optimized");
 const userArgIndex = process.argv.indexOf('--user');
 const passArgIndex = process.argv.indexOf('--pass');
+const accArgIndex = process.argv.indexOf('--account');
+
+const CRED_FILE = path.resolve(__dirname, "../../credentials.json");
+let loadedCredentials = {
+    email: "fortestblind2026@gmail.com",
+    password: "fortest00001!"
+};
+
+if (fs.existsSync(CRED_FILE)) {
+    try {
+        const creds = JSON.parse(fs.readFileSync(CRED_FILE, 'utf8'));
+        if (accArgIndex !== -1 && process.argv[accArgIndex + 1]) {
+            const accKey = process.argv[accArgIndex + 1];
+            if (creds[accKey]) {
+                loadedCredentials = creds[accKey];
+            } else {
+                console.warn(`⚠️ Account index "${accKey}" not found in credentials.json. Using default.`);
+            }
+        } else if (userArgIndex !== -1 && process.argv[userArgIndex + 1]) {
+            // Check if email match in JSON
+            const found = Object.values(creds).find(c => c.email === process.argv[userArgIndex + 1]);
+            if (found) {
+                loadedCredentials = found;
+            } else {
+                loadedCredentials.email = process.argv[userArgIndex + 1];
+                if (passArgIndex !== -1 && process.argv[passArgIndex + 1]) {
+                    loadedCredentials.password = process.argv[passArgIndex + 1];
+                }
+            }
+        }
+    } catch (e) {
+        console.error("❌ Error loading credentials.json:", e.message);
+    }
+}
 
 const CREDENTIALS = {
-    email: userArgIndex !== -1 && process.argv[userArgIndex + 1] ? process.argv[userArgIndex + 1] : "fortestblind2026@gmail.com",
-    password: passArgIndex !== -1 && process.argv[passArgIndex + 1] ? process.argv[passArgIndex + 1] : "fortest00001!"
+    email: userArgIndex !== -1 && process.argv[userArgIndex + 1] ? process.argv[userArgIndex + 1] : loadedCredentials.email,
+    password: passArgIndex !== -1 && process.argv[passArgIndex + 1] ? process.argv[passArgIndex + 1] : loadedCredentials.password
 };
 
 const SHOULD_LOGIN = false;
@@ -1374,16 +1408,26 @@ async function startScraping() {
     const useLogin = process.argv.includes('--login');
     const useManualLogin = process.argv.includes('--manual-login');
     const useLoginWait = process.argv.includes('--login-wait');
+    const useReverse = process.argv.includes('--reverse');
+
+    if (useReverse) {
+        console.log("🔄 Reverse mode active: Processing URLs from tail to head");
+        urls.reverse();
+    }
+
     let browser, context;
 
     async function launchBrowserInstance() {
         let b, ctx;
         if (usePersistentContext) {
-            const userDataDir = path.resolve(__dirname, "../../browser_profile");
+            const accArgIndex = process.argv.indexOf('--account');
+            const profileSuffix = (accArgIndex !== -1 && process.argv[accArgIndex + 1]) ? `_${process.argv[accArgIndex + 1]}` : "";
+            const userDataDir = path.resolve(__dirname, `../../browser_profile${profileSuffix}`);
+
             if (!fs.existsSync(userDataDir)) {
                 fs.mkdirSync(userDataDir, { recursive: true });
             }
-            console.log(`Using persistent browser profile at: ${userDataDir}`);
+            console.log(`📂 Using persistent browser profile at: ${userDataDir}`);
             ctx = await chromium.launchPersistentContext(userDataDir, {
                 headless: useHeadless,
                 channel: 'chrome',
