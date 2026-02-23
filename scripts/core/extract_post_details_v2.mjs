@@ -8,7 +8,8 @@ import { fileURLToPath } from "url";
 // Apply stealth plugin ONLY if login is not required
 const isLoginActive = process.argv.includes('--login') ||
     process.argv.includes('--manual-login') ||
-    process.argv.includes('--login-wait');
+    process.argv.includes('--login-wait') ||
+    process.argv.includes('--auto-login');
 const usePrevRetry = process.argv.includes('--prev-retry');
 
 if (!isLoginActive) {
@@ -16,11 +17,14 @@ if (!isLoginActive) {
 }
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const IN_FILE = process.argv[2] && fs.existsSync(process.argv[2])
-    ? path.resolve(process.argv[2])
+const inArgIdx = process.argv.findIndex(arg => arg.endsWith('.txt') && !arg.startsWith('--'));
+const IN_FILE = process.argv[inArgIdx] && fs.existsSync(process.argv[inArgIdx])
+    ? path.resolve(process.argv[inArgIdx])
     : path.resolve(__dirname, "../../data/nvidia_post_urls.txt");
-const OUT_DIR = process.argv[3]
-    ? path.resolve(process.argv[3])
+
+const outArgIdx = process.argv.findIndex((arg, idx) => idx > inArgIdx && !arg.startsWith('--'));
+const OUT_DIR = outArgIdx !== -1 && process.argv[outArgIdx]
+    ? path.resolve(process.argv[outArgIdx])
     : path.resolve(__dirname, "../../data/posts_optimized");
 const userArgIndex = process.argv.indexOf('--user');
 const passArgIndex = process.argv.indexOf('--pass');
@@ -74,6 +78,8 @@ const LOAD_MORE_TIMEOUT = 5000; // Balanced: gives enough time for slow loads
 // Organic Navigation Constants
 const COMPANY_POSTS_URL = "https://www.teamblind.com/company/T-Mobile/posts";
 const BASE_REFERER = "https://www.teamblind.com/company/T-Mobile/";
+
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 function normalizeDate(dateStr, referenceTime) {
     if (!dateStr) return "";
@@ -136,7 +142,7 @@ function getFormattedScrapeTime() {
 }
 
 async function login(page, options = {}) {
-    const { manual: forceManual = false, waitOnly = false } = options;
+    const { manual: forceManual = false, waitOnly = false, automatic = false, semiAuto = false } = options;
 
     if (waitOnly) {
         console.log("\n--------------------------------------------------");
@@ -146,7 +152,62 @@ async function login(page, options = {}) {
         console.log("2. Please SIGN IN manually in the browser.");
         console.log("3. Once you reach the home feed, the script will continue.");
         console.log("--------------------------------------------------");
+    } else if (automatic) {
+        console.log("🚀 Starting Organic Auto-Login sequence (--auto-login)...");
+
+        // Direct navigate to sign-in page (more reliable than /login or /session-out)
+        console.log("   🔑 Navigating to sign-in page...");
+        await page.goto("https://www.teamblind.com/sign-in", { waitUntil: "networkidle" });
+        await sleep(2000 + Math.random() * 2000);
+
+        // Check if already logged in (Look for profile icon or sign out link)
+        const isLoggedIn = await page.evaluate(() => {
+            const hasUserMeta = !!document.querySelector('a[href*="/my-page"], .user_info, button.gnb-btn_user');
+            const hasSignOutBtn = Array.from(document.querySelectorAll('button')).some(b => b.innerText.includes('Sign Out'));
+            return hasUserMeta || hasSignOutBtn;
+        });
+
+        if (isLoggedIn) {
+            console.log("   ✅ Already logged in. Skipping login sequence.");
+            return;
+        }
+
+        // Step 2: Populate credentials human-style
+        try {
+            const emailSelector = '#email';
+            const passwordSelector = '#password';
+            const submitSelector = 'button.bg-black, button[type="submit"]';
+
+            console.log("   ⏳ Waiting for email field...");
+            await page.waitForSelector(emailSelector, { timeout: 15000, state: 'visible' });
+
+            console.log("   ✍️ Typing credentials...");
+            await page.locator(emailSelector).click();
+            await sleep(500 + Math.random() * 500);
+            await page.locator(emailSelector).type(CREDENTIALS.email, { delay: 100 + Math.random() * 100 });
+
+            await sleep(800 + Math.random() * 800);
+            await page.locator(passwordSelector).click();
+            await sleep(500 + Math.random() * 500);
+            await page.locator(passwordSelector).type(CREDENTIALS.password, { delay: 100 + Math.random() * 120 });
+
+            await sleep(1000 + Math.random() * 500);
+
+            // Check for "Stay signed in" checkbox
+            const staySignedIn = 'input[name="stay_signed_in"], #stay_signed_in';
+            if (await page.locator(staySignedIn).isVisible()) {
+                await page.locator(staySignedIn).check();
+                await sleep(400 + Math.random() * 400);
+            }
+
+            console.log("   🚀 Clicking Sign in button...");
+            await page.locator(submitSelector).first().click();
+
+        } catch (error) {
+            console.log("   ⚠️ Auto-login interaction error:", error.message);
+        }
     } else {
+        // Original --login or --manual-login behavior
         console.log("Attempting to load login page and populate credentials...");
         await page.goto("https://www.teamblind.com/login", { waitUntil: "domcontentloaded" });
 
@@ -166,50 +227,40 @@ async function login(page, options = {}) {
             console.log("   ℹ Login form fields not found or already filled (timeout after 15s).");
         }
 
-        if (!forceManual) {
+        if (semiAuto && !forceManual) {
             try {
                 await page.click('button[type="submit"]');
                 console.log("   🚀 Login form submitted. Waiting for redirection...");
-
-                await page.waitForFunction(() => {
-                    const url = window.location.href;
-                    return !url.includes('/login') && !url.includes('/sign-in') && !url.includes('/login-required');
-                }, { timeout: 15000 });
-
-                console.log("✅ Auto-login successful. Proceeding...");
-                return; // Success
             } catch (e) {
-                console.log("   ⚠️ Auto-submit failed or manual intervention required:", e.message);
+                console.log("   ⚠️ Auto-submit failed:", e.message);
             }
+        } else {
+            console.log("--------------------------------------------------");
+            console.log("👉 MANUAL LOGIN INTERVENTION:");
+            console.log("1. Please check the browser window.");
+            console.log("2. Credentials have been pre-filled for you.");
+            console.log("3. Solve any CAPTCHAs and click Submit.");
+            console.log("4. Once you reach the home feed, the script will continue.");
+            console.log("--------------------------------------------------");
         }
-
-        console.log("--------------------------------------------------");
-        console.log("👉 MANUAL LOGIN INTERVENTION:");
-        console.log("1. Please check the browser window.");
-        console.log("2. Credentials have been pre-filled for you.");
-        console.log("3. Solve any CAPTCHAs and click Submit.");
-        console.log("4. Once you reach the home feed, the script will continue.");
-        console.log("--------------------------------------------------");
     }
 
-    // Common manual login wait logic - Exact mirror of greedy
-    console.log("   Waiting for login detection (URL matching active)...");
+    // Detection Logic
+    console.log("   🔍 Monitoring login status (watching for redirection or session cookie)...");
     try {
-        page.setDefaultTimeout(0); // Infinite wait
+        page.setDefaultTimeout(0); // Infinite wait for manual/captcha
         await page.waitForFunction(() => {
             const url = window.location.href;
-            return !url.includes('/login') && !url.includes('/sign-in') && !url.includes('/login-required');
+            const success = !url.includes('/login') && !url.includes('/sign-in') && !url.includes('/login-required');
+            const hasUserIcon = !!document.querySelector('a[href*="/my-page"], .user_info, button.gnb-btn_user');
+            return success || hasUserIcon;
         }, { timeout: 0 });
 
-        console.log("✅ Login detected. Proceeding to scrape...");
+        console.log("✅ Login successful. Proceeding...");
+        await sleep(1500 + Math.random() * 1000); // Final "human" pause before starting work
     } catch (waitError) {
-        if (waitError.message.includes('Target page, context or browser has been closed')) {
-            console.error("\n❌ Browser closed. Exiting...");
-            process.exit(1);
-        } else {
-            console.error("\n❌ Manual login wait failed:", waitError.message);
-            process.exit(1);
-        }
+        console.error("\n❌ Login detection failed:", waitError.message);
+        process.exit(1);
     }
 }
 
@@ -1382,17 +1433,22 @@ async function extractPostData(page, url, logger = console, options = {}) {
 }
 
 async function startScraping() {
-    const argUrl = process.argv[2];
     let urls = [];
 
-    if (argUrl && argUrl.startsWith("http")) {
-        urls = [argUrl];
-        console.log(`⚡ Starting OPTIMIZED single post extraction for: ${argUrl}`);
+    if (IN_FILE.startsWith("http")) {
+        urls = [IN_FILE];
+        console.log(`⚡ Starting OPTIMIZED single post extraction for: ${IN_FILE}`);
     } else {
         console.log(`⚡ Input file: ${IN_FILE}`);
         console.log(`⚡ Output dir: ${OUT_DIR}`);
         if (fs.existsSync(IN_FILE)) {
             urls = fs.readFileSync(IN_FILE, "utf-8").split("\n").filter(u => u.trim());
+
+            if (process.argv.includes('--reverse')) {
+                console.log("🔄 Reverse mode enabled. Reversing URL list...");
+                urls.reverse();
+            }
+
             console.log(`⚡ Starting OPTIMIZED batch extraction: ${urls.length} URLs found`);
         } else {
             console.error(`Input file not found: ${IN_FILE}`);
@@ -1401,18 +1457,43 @@ async function startScraping() {
     }
 
     const usePersistentContext = process.argv.includes('--persistent');
-    const useHeadless = process.argv.includes('--headless');
+    const useHeadless = false; // process.argv.includes('--headless'); // Deprecated: Headless mode is less reliable
+    if (process.argv.includes('--headless')) {
+        console.warn("⚠️  WARNING: --headless mode is deprecated and disabled for reliability. Running in headful mode.");
+    }
     const useCaptureTopLevel = process.argv.includes('--capture-toplevel');
     const useNewBrowser = process.argv.includes('--new-browser');
     const useVerbose = process.argv.includes('--verbose');
     const useLogin = process.argv.includes('--login');
     const useManualLogin = process.argv.includes('--manual-login');
     const useLoginWait = process.argv.includes('--login-wait');
+    const useAutoLogin = process.argv.includes('--auto-login');
     const useReverse = process.argv.includes('--reverse');
 
     if (useReverse) {
         console.log("🔄 Reverse mode active: Processing URLs from tail to head");
         urls.reverse();
+    }
+
+    const proxyArgIndex = process.argv.indexOf('--proxy');
+    let proxyConfig = undefined;
+    if (proxyArgIndex !== -1 && process.argv[proxyArgIndex + 1]) {
+        try {
+            const rawProxy = process.argv[proxyArgIndex + 1];
+            if (rawProxy.startsWith('socks5://')) {
+                proxyConfig = { server: rawProxy };
+                console.log(`🌐 Using Proxy: ${proxyConfig.server}`);
+            } else {
+                const pUrl = new URL(rawProxy.startsWith('http') ? rawProxy : `http://${rawProxy}`);
+                proxyConfig = { server: `${pUrl.protocol}//${pUrl.host}` };
+                if (pUrl.username) proxyConfig.username = decodeURIComponent(pUrl.username);
+                if (pUrl.password) proxyConfig.password = decodeURIComponent(pUrl.password);
+                console.log(`🌐 Using Proxy: ${proxyConfig.server}`);
+            }
+        } catch (e) {
+            proxyConfig = { server: process.argv[proxyArgIndex + 1] };
+            console.log(`🌐 Using Proxy (fallback): ${proxyConfig.server}`);
+        }
     }
 
     let browser, context;
@@ -1431,6 +1512,7 @@ async function startScraping() {
             ctx = await chromium.launchPersistentContext(userDataDir, {
                 headless: useHeadless,
                 channel: 'chrome',
+                proxy: proxyConfig,
                 args: [
                     '--no-sandbox',
                     '--disable-setuid-sandbox',
@@ -1444,13 +1526,13 @@ async function startScraping() {
                 viewport: { width: 1920, height: 1080 }
             });
         } else {
-            b = await chromium.launch({ headless: useHeadless });
+            b = await chromium.launch({ headless: useHeadless, proxy: proxyConfig });
             ctx = await b.newContext();
         }
 
         // OPTIMIZATION: Block unnecessary resources to speed up page loads
         // Bypassed if login is active to ensure CAPTCHAs and other assets load
-        if (!useLogin && !useManualLogin && !useLoginWait) {
+        if (!useLogin && !useManualLogin && !useLoginWait && !useAutoLogin) {
             await ctx.route('**/*', (route) => {
                 const url = route.request().url();
                 if (url.includes('google-analytics') ||
@@ -1473,8 +1555,13 @@ async function startScraping() {
     let page;
     ({ browser, context, page } = await launchBrowserInstance());
 
-    if (useLogin || useManualLogin || useLoginWait) {
-        await login(page, { manual: useManualLogin, waitOnly: useLoginWait });
+    if (useLogin || useManualLogin || useLoginWait || useAutoLogin) {
+        await login(page, {
+            manual: useManualLogin,
+            waitOnly: useLoginWait,
+            automatic: useAutoLogin,
+            semiAuto: useLogin && !useAutoLogin
+        });
     } else {
         console.log("Skipping login as per configuration. Some content (polls, etc.) may be missing.");
     }
@@ -1572,6 +1659,8 @@ async function startScraping() {
                     console.log(`⚠️ ${e.message === "RATE_LIMITED" ? "Rate limited" : "Timeout"}. Retry ${retryCount}/${maxRetries} (${accumulatedWait}s/90s)...`);
 
                     if (e.message === "RATE_LIMITED") {
+                        console.log(`   🧊 Rate limit detected. Running 30s deep breath cooler...`);
+                        await page.waitForTimeout(30000);
                         // If rate limited, try to "unstick" by going to home page
                         await page.goto("https://www.teamblind.com/", { waitUntil: "domcontentloaded" }).catch(() => { });
                     }
@@ -1594,8 +1683,15 @@ async function startScraping() {
             console.error(`❌ Permanent failure for ${url} after ${maxRetries} retries.`);
         }
 
-        // Adaptive delay between posts (3-7 seconds randomized)
-        const delay = 3000 + Math.random() * 4000;
+        // Adaptive delay between posts with --delay and --jitter support
+        const delayArgIdx = process.argv.indexOf('--delay');
+        const jitterArgIdx = process.argv.indexOf('--jitter');
+
+        const baseDelayMs = delayArgIdx !== -1 ? parseInt(process.argv[delayArgIdx + 1], 10) : 8000;
+        const jitterMultiplier = jitterArgIdx !== -1 ? parseFloat(process.argv[jitterArgIdx + 1]) : 0.75;
+
+        const delay = baseDelayMs + Math.floor(Math.random() * (baseDelayMs * jitterMultiplier));
+        console.log(`⏳ Cooldown: Waiting ${Math.round(delay / 1000)}s before next post to avoid rate limits...`);
         await page.waitForTimeout(delay);
     }
 
