@@ -1,0 +1,38 @@
+[
+    {
+        "Symbol": "XYZ",
+        "Company Name": "Block, Inc.",
+        "Post URL": "https://www.teamblind.com/company/Block/posts",
+        "# Posts": 2582
+    },
+    {
+        "Symbol": "QCOM",
+        "Company Name": "Qualcomm",
+        "Post URL": "https://www.teamblind.com/company/Qualcomm/posts",
+        "# Posts": 1756
+    },
+    {
+        "Symbol": "PLTR",
+        "Company Name": "Palantir Technologies",
+        "Post URL": "https://www.teamblind.com/company/Palantir/posts",
+        "# Posts": 2043
+    },
+    {
+        "Symbol": "AMD",
+        "Company Name": "Advanced Micro Devices",
+        "Post URL": "https://www.teamblind.com/company/AMD/posts",
+        "# Posts": 2167
+    },
+    {
+        "Symbol": "COF",
+        "Company Name": "Capital One",
+        "Post URL": "https://www.teamblind.com/company/Capital-One/posts",
+        "# Posts": 2439
+    },
+    {
+        "Symbol": "AVGO",
+        "Company Name": "Broadcom",
+        "Post URL": "https://www.teamblind.com/company/Broadcom/posts",
+        "# Posts": 1047
+    }
+]

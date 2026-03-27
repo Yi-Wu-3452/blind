@@ -1,0 +1,542 @@
+[
+  {
+    "Symbol": "HPE",
+    "Company Name": "Hewlett Packard Enterprise",
+    "Post URL": "https://www.teamblind.com/company/Hewlett-Packard-Enterprise/posts",
+    "# Posts": 932
+  },
+  {
+    "Symbol": "BKNG",
+    "Company Name": "Booking Holdings",
+    "Post URL": "https://www.teamblind.com/company/Booking.com/posts",
+    "# Posts": 914
+  },
+  {
+    "Symbol": "NDAQ",
+    "Company Name": "Nasdaq, Inc.",
+    "Post URL": "https://www.teamblind.com/company/Nasdaq/posts",
+    "# Posts": 883
+  },
+  {
+    "Symbol": "BDX",
+    "Company Name": "Becton Dickinson",
+    "Post URL": "https://www.teamblind.com/company/BD/posts",
+    "# Posts": 849
+  },
+  {
+    "Symbol": "GE",
+    "Company Name": "GE Aerospace",
+    "Post URL": "https://www.teamblind.com/company/GE/posts",
+    "# Posts": 842
+  },
+  {
+    "Symbol": "CTSH",
+    "Company Name": "Cognizant",
+    "Post URL": "https://www.teamblind.com/company/Cognizant/posts",
+    "# Posts": 831
+  },
+  {
+    "Symbol": "APP",
+    "Company Name": "AppLovin",
+    "Post URL": "https://www.teamblind.com/company/AppLovin/posts",
+    "# Posts": 820
+  },
+  {
+    "Symbol": "SNPS",
+    "Company Name": "Synopsys",
+    "Post URL": "https://www.teamblind.com/company/Synopsys/posts",
+    "# Posts": 774
+  },
+  {
+    "Symbol": "FOXA",
+    "Company Name": "Fox Corporation (Class A)",
+    "Post URL": "https://www.teamblind.com/company/Fox/posts",
+    "# Posts": 772
+  },
+  {
+    "Symbol": "ALLE",
+    "Company Name": "Allegion",
+    "Post URL": "https://www.teamblind.com/company/Allegion/posts",
+    "# Posts": 754
+  },
+  {
+    "Symbol": "CMCSA",
+    "Company Name": "Comcast",
+    "Post URL": "https://www.teamblind.com/company/Comcast/posts",
+    "# Posts": 706
+  },
+  {
+    "Symbol": "GDDY",
+    "Company Name": "GoDaddy",
+    "Post URL": "https://www.teamblind.com/company/GoDaddy/posts",
+    "# Posts": 652
+  },
+  {
+    "Symbol": "ISRG",
+    "Company Name": "Intuitive Surgical",
+    "Post URL": "https://www.teamblind.com/company/Intuitive/posts",
+    "# Posts": 621
+  },
+  {
+    "Symbol": "CARR",
+    "Company Name": "Carrier Global",
+    "Post URL": "https://www.teamblind.com/company/Carrier/posts",
+    "# Posts": 579
+  },
+  {
+    "Symbol": "RTX",
+    "Company Name": "RTX Corporation",
+    "Post URL": "https://www.teamblind.com/company/RTX/posts",
+    "# Posts": 547
+  },
+  {
+    "Symbol": "PFE",
+    "Company Name": "Pfizer",
+    "Post URL": "https://www.teamblind.com/company/Pfizer/posts",
+    "# Posts": 525
+  },
+  {
+    "Symbol": "ADP",
+    "Company Name": "Automatic Data Processing",
+    "Post URL": "https://www.teamblind.com/company/ADP/posts",
+    "# Posts": 517
+  },
+  {
+    "Symbol": "FDX",
+    "Company Name": "FedEx",
+    "Post URL": "https://www.teamblind.com/company/Fedex/posts",
+    "# Posts": 507
+  },
+  {
+    "Symbol": "TXN",
+    "Company Name": "Texas Instruments",
+    "Post URL": "https://www.teamblind.com/company/Texas-Instruments/posts",
+    "# Posts": 469
+  },
+  {
+    "Symbol": "SCHW",
+    "Company Name": "Charles Schwab Corporation",
+    "Post URL": "https://www.teamblind.com/company/Charles-Schwab/posts",
+    "# Posts": 443
+  },
+  {
+    "Symbol": "LMT",
+    "Company Name": "Lockheed Martin",
+    "Post URL": "https://www.teamblind.com/company/Lockheed-Martin/posts",
+    "# Posts": 425
+  },
+  {
+    "Symbol": "AMAT",
+    "Company Name": "Applied Materials",
+    "Post URL": "https://www.teamblind.com/company/Applied-Materials/posts",
+    "# Posts": 381
+  },
+  {
+    "Symbol": "HON",
+    "Company Name": "Honeywell",
+    "Post URL": "https://www.teamblind.com/company/Honeywell/posts",
+    "# Posts": 372
+  },
+  {
+    "Symbol": "TRV",
+    "Company Name": "Travelers Companies (The)",
+    "Post URL": "https://www.teamblind.com/company/Travelers/posts",
+    "# Posts": 368
+  },
+  {
+    "Symbol": "WM",
+    "Company Name": "Waste Management",
+    "Post URL": "https://www.teamblind.com/company/Waste-Management/posts",
+    "# Posts": 368
+  },
+  {
+    "Symbol": "HD",
+    "Company Name": "Home Depot (The)",
+    "Post URL": "https://www.teamblind.com/company/The-Home-Depot/posts",
+    "# Posts": 358
+  },
+  {
+    "Symbol": "FFIV",
+    "Company Name": "F5, Inc.",
+    "Post URL": "https://www.teamblind.com/company/F5-Networks/posts",
+    "# Posts": 335
+  },
+  {
+    "Symbol": "TTD",
+    "Company Name": "Trade Desk (The)",
+    "Post URL": "https://www.teamblind.com/company/The-Trade-Desk/posts",
+    "# Posts": 333
+  },
+  {
+    "Symbol": "EXPE",
+    "Company Name": "Expedia Group",
+    "Post URL": "https://www.teamblind.com/company/Expedia/posts",
+    "# Posts": 314
+  },
+  {
+    "Symbol": "CI",
+    "Company Name": "Cigna",
+    "Post URL": "https://www.teamblind.com/company/Cigna/posts",
+    "# Posts": 306
+  },
+  {
+    "Symbol": "IT",
+    "Company Name": "Gartner",
+    "Post URL": "https://www.teamblind.com/company/Gartner/posts",
+    "# Posts": 301
+  },
+  {
+    "Symbol": "CVNA",
+    "Company Name": "Carvana",
+    "Post URL": "https://www.teamblind.com/company/Carvana/posts",
+    "# Posts": 279
+  },
+  {
+    "Symbol": "BX",
+    "Company Name": "Blackstone Inc.",
+    "Post URL": "https://www.teamblind.com/company/Blackstone/posts",
+    "# Posts": 277
+  },
+  {
+    "Symbol": "EPAM",
+    "Company Name": "EPAM Systems",
+    "Post URL": "https://www.teamblind.com/company/EPAM-Systems/posts",
+    "# Posts": 270
+  },
+  {
+    "Symbol": "AXON",
+    "Company Name": "Axon Enterprise",
+    "Post URL": "https://www.teamblind.com/company/Axon/posts",
+    "# Posts": 268
+  },
+  {
+    "Symbol": "WDC",
+    "Company Name": "Western Digital",
+    "Post URL": "https://www.teamblind.com/company/Western-Digital/posts",
+    "# Posts": 267
+  },
+  {
+    "Symbol": "STT",
+    "Company Name": "State Street Corporation",
+    "Post URL": "https://www.teamblind.com/company/State-Street/posts",
+    "# Posts": 262
+  },
+  {
+    "Symbol": "PSKY",
+    "Company Name": "Paramount Skydance Corporation",
+    "Post URL": "https://www.teamblind.com/company/Paramount/posts",
+    "# Posts": 257
+  },
+  {
+    "Symbol": "JNJ",
+    "Company Name": "Johnson & Johnson",
+    "Post URL": "https://www.teamblind.com/company/Johnson&Johnson/posts",
+    "# Posts": 254
+  },
+  {
+    "Symbol": "CMG",
+    "Company Name": "Chipotle Mexican Grill",
+    "Post URL": "https://www.teamblind.com/company/Chipotle/posts",
+    "# Posts": 251
+  },
+  {
+    "Symbol": "ANET",
+    "Company Name": "Arista Networks",
+    "Post URL": "https://www.teamblind.com/company/Arista-Networks/posts",
+    "# Posts": 249
+  },
+  {
+    "Symbol": "NOC",
+    "Company Name": "Northrop Grumman",
+    "Post URL": "https://www.teamblind.com/company/Northrop-Grumman/posts",
+    "# Posts": 246
+  },
+  {
+    "Symbol": "CFG",
+    "Company Name": "Citizens Financial Group",
+    "Post URL": "https://www.teamblind.com/company/Citizens%20Bank/posts",
+    "# Posts": 239
+  },
+  {
+    "Symbol": "NXPI",
+    "Company Name": "NXP Semiconductors",
+    "Post URL": "https://www.teamblind.com/company/NXP-Semiconductor/posts",
+    "# Posts": 235
+  },
+  {
+    "Symbol": "FTNT",
+    "Company Name": "Fortinet",
+    "Post URL": "https://www.teamblind.com/company/Fortinet/posts",
+    "# Posts": 234
+  },
+  {
+    "Symbol": "PEP",
+    "Company Name": "PepsiCo",
+    "Post URL": "https://www.teamblind.com/company/PepsiCo/posts",
+    "# Posts": 225
+  },
+  {
+    "Symbol": "ALGN",
+    "Company Name": "Align Technology",
+    "Post URL": "https://www.teamblind.com/company/Align-Technology/posts",
+    "# Posts": 215
+  },
+  {
+    "Symbol": "MRK",
+    "Company Name": "Merck & Co.",
+    "Post URL": "https://www.teamblind.com/company/Merck/posts",
+    "# Posts": 207
+  },
+  {
+    "Symbol": "KLAC",
+    "Company Name": "KLA Corporation",
+    "Post URL": "https://www.teamblind.com/company/KLA/posts",
+    "# Posts": 203
+  },
+  {
+    "Symbol": "LULU",
+    "Company Name": "Lululemon Athletica",
+    "Post URL": "https://www.teamblind.com/company/Lululemon/posts",
+    "# Posts": 202
+  },
+  {
+    "Symbol": "UAL",
+    "Company Name": "United Airlines Holdings",
+    "Post URL": "https://www.teamblind.com/company/United-Airlines/posts",
+    "# Posts": 201
+  },
+  {
+    "Symbol": "AMGN",
+    "Company Name": "Amgen",
+    "Post URL": "https://www.teamblind.com/company/Amgen/posts",
+    "# Posts": 200
+  },
+  {
+    "Symbol": "LEN",
+    "Company Name": "Lennar",
+    "Post URL": "https://www.teamblind.com/company/Lennar/posts",
+    "# Posts": 195
+  },
+  {
+    "Symbol": "MAR",
+    "Company Name": "Marriott International",
+    "Post URL": "https://www.teamblind.com/company/Marriott/posts",
+    "# Posts": 193
+  },
+  {
+    "Symbol": "FISV",
+    "Company Name": "Fiserv",
+    "Post URL": "https://www.teamblind.com/company/Fiserv/posts",
+    "# Posts": 189
+  },
+  {
+    "Symbol": "SO",
+    "Company Name": "Southern Company",
+    "Post URL": "https://www.teamblind.com/company/Southern-Company/posts",
+    "# Posts": 189
+  },
+  {
+    "Symbol": "FICO",
+    "Company Name": "Fair Isaac",
+    "Post URL": "https://www.teamblind.com/company/FICO/posts",
+    "# Posts": 187
+  },
+  {
+    "Symbol": "MDT",
+    "Company Name": "Medtronic",
+    "Post URL": "https://www.teamblind.com/company/Medtronic/posts",
+    "# Posts": 186
+  },
+  {
+    "Symbol": "CPB",
+    "Company Name": "Campbell's Company (The)",
+    "Post URL": "https://www.teamblind.com/company/Campbell/posts",
+    "# Posts": 178
+  },
+  {
+    "Symbol": "KR",
+    "Company Name": "Kroger",
+    "Post URL": "https://www.teamblind.com/company/Kroger/posts",
+    "# Posts": 172
+  },
+  {
+    "Symbol": "EFX",
+    "Company Name": "Equifax",
+    "Post URL": "https://www.teamblind.com/company/Equifax/posts",
+    "# Posts": 166
+  },
+  {
+    "Symbol": "DG",
+    "Company Name": "Dollar General",
+    "Post URL": "https://www.teamblind.com/company/Dollar-General/posts",
+    "# Posts": 163
+  },
+  {
+    "Symbol": "PNC",
+    "Company Name": "PNC Financial Services",
+    "Post URL": "https://www.teamblind.com/company/PNC/posts",
+    "# Posts": 157
+  },
+  {
+    "Symbol": "MCD",
+    "Company Name": "McDonald's",
+    "Post URL": "https://www.teamblind.com/company/McDonalds/posts",
+    "# Posts": 155
+  },
+  {
+    "Symbol": "PCG",
+    "Company Name": "PG&E Corporation",
+    "Post URL": "https://www.teamblind.com/company/PGE/posts",
+    "# Posts": 152
+  },
+  {
+    "Symbol": "HUM",
+    "Company Name": "Humana",
+    "Post URL": "https://www.teamblind.com/company/Humana/posts",
+    "# Posts": 148
+  },
+  {
+    "Symbol": "ADI",
+    "Company Name": "Analog Devices",
+    "Post URL": "https://www.teamblind.com/company/Analog-Devices/posts",
+    "# Posts": 143
+  },
+  {
+    "Symbol": "AWK",
+    "Company Name": "American Water Works",
+    "Post URL": "https://www.teamblind.com/company/American-Water/posts",
+    "# Posts": 138
+  },
+  {
+    "Symbol": "LRCX",
+    "Company Name": "Lam Research",
+    "Post URL": "https://www.teamblind.com/company/Lam-Research/posts",
+    "# Posts": 137
+  },
+  {
+    "Symbol": "EQIX",
+    "Company Name": "Equinix",
+    "Post URL": "https://www.teamblind.com/company/Equinix/posts",
+    "# Posts": 136
+  },
+  {
+    "Symbol": "MET",
+    "Company Name": "MetLife",
+    "Post URL": "https://www.teamblind.com/company/MetLife/posts",
+    "# Posts": 133
+  },
+  {
+    "Symbol": "XOM",
+    "Company Name": "ExxonMobil",
+    "Post URL": "https://www.teamblind.com/company/ExxonMobil/posts",
+    "# Posts": 126
+  },
+  {
+    "Symbol": "ABBV",
+    "Company Name": "AbbVie",
+    "Post URL": "https://www.teamblind.com/company/abbvie/posts",
+    "# Posts": 125
+  },
+  {
+    "Symbol": "CVX",
+    "Company Name": "Chevron Corporation",
+    "Post URL": "https://www.teamblind.com/company/Chevron/posts",
+    "# Posts": 124
+  },
+  {
+    "Symbol": "BK",
+    "Company Name": "BNY Mellon",
+    "Post URL": "https://www.teamblind.com/company/Bny-Mellon/posts",
+    "# Posts": 123
+  },
+  {
+    "Symbol": "KO",
+    "Company Name": "Coca-Cola Company (The)",
+    "Post URL": "https://www.teamblind.com/company/Coca-Cola/posts",
+    "# Posts": 123
+  },
+  {
+    "Symbol": "ROST",
+    "Company Name": "Ross Stores",
+    "Post URL": "https://www.teamblind.com/company/Ross/posts",
+    "# Posts": 122
+  },
+  {
+    "Symbol": "GEHC",
+    "Company Name": "GE HealthCare",
+    "Post URL": "https://www.teamblind.com/company/GE-HealthCare/posts",
+    "# Posts": 118
+  },
+  {
+    "Symbol": "LUV",
+    "Company Name": "Southwest Airlines",
+    "Post URL": "https://www.teamblind.com/company/Southwest-Airlines/posts",
+    "# Posts": 117
+  },
+  {
+    "Symbol": "FIS",
+    "Company Name": "Fidelity National Information Services",
+    "Post URL": "https://www.teamblind.com/company/FIS/posts",
+    "# Posts": 114
+  },
+  {
+    "Symbol": "MU",
+    "Company Name": "Micron Technology",
+    "Post URL": "https://www.teamblind.com/company/Micron-Technology/posts",
+    "# Posts": 114
+  },
+  {
+    "Symbol": "IBKR",
+    "Company Name": "Interactive Brokers",
+    "Post URL": "https://www.teamblind.com/company/Interactive-Brokers/posts",
+    "# Posts": 112
+  },
+  {
+    "Symbol": "HLT",
+    "Company Name": "Hilton Worldwide",
+    "Post URL": "https://www.teamblind.com/company/Hilton/posts",
+    "# Posts": 111
+  },
+  {
+    "Symbol": "SYK",
+    "Company Name": "Stryker Corporation",
+    "Post URL": "https://www.teamblind.com/company/Stryker/posts",
+    "# Posts": 110
+  },
+  {
+    "Symbol": "WBD",
+    "Company Name": "Warner Bros. Discovery",
+    "Post URL": "https://www.teamblind.com/company/Warner-Bros-Discovery/posts",
+    "# Posts": 110
+  },
+  {
+    "Symbol": "IQV",
+    "Company Name": "IQVIA",
+    "Post URL": "https://www.teamblind.com/company/IQVIA/posts",
+    "# Posts": 106
+  },
+  {
+    "Symbol": "GLW",
+    "Company Name": "Corning Inc.",
+    "Post URL": "https://www.teamblind.com/company/Corning/posts",
+    "# Posts": 105
+  },
+  {
+    "Symbol": "CMI",
+    "Company Name": "Cummins",
+    "Post URL": "https://www.teamblind.com/company/Cummins/posts",
+    "# Posts": 104
+  },
+  {
+    "Symbol": "LDOS",
+    "Company Name": "Leidos",
+    "Post URL": "https://www.teamblind.com/company/Leidos/posts",
+    "# Posts": 103
+  },
+  {
+    "Symbol": "APTV",
+    "Company Name": "Aptiv",
+    "Post URL": "https://www.teamblind.com/company/Aptiv/posts",
+    "# Posts": 102
+  }
+]

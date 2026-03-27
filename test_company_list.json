@@ -1,0 +1,20 @@
+[
+    {
+        "Symbol": "SHW",
+        "Company Name": "Sherwin-Williams",
+        "Post URL": "https://www.teamblind.com/company/Sherwin-Williams/posts",
+        "# Posts": 6
+    },
+    {
+        "Symbol": "TXT",
+        "Company Name": "Textron",
+        "Post URL": "https://www.teamblind.com/company/Textron/posts",
+        "# Posts": 6
+    },
+    {
+        "Symbol": "ZTS",
+        "Company Name": "Zoetis",
+        "Post URL": "https://www.teamblind.com/company/Zoetis/posts",
+        "# Posts": 6
+    }
+]

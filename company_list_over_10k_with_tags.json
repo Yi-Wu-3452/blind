@@ -1,0 +1,1390 @@
+[
+  {
+    "Symbol": "AMZN",
+    "Company Name": "Amazon",
+    "Post URL": "https://www.teamblind.com/company/Amazon/posts",
+    "# Posts": 153000,
+    "Tags": [
+      {
+        "Name": "Interview",
+        "URL": "https://www.teamblind.com/company/Amazon/posts/amazon-interview"
+      },
+      {
+        "Name": "Layoffs",
+        "URL": "https://www.teamblind.com/company/Amazon/posts/amazon-layoffs"
+      },
+      {
+        "Name": "Culture",
+        "URL": "https://www.teamblind.com/company/Amazon/posts/amazon-culture"
+      },
+      {
+        "Name": "WLB",
+        "URL": "https://www.teamblind.com/company/Amazon/posts/amazon-wlb"
+      },
+      {
+        "Name": "Ads",
+        "URL": "https://www.teamblind.com/company/Amazon/posts/amazon-ads"
+      },
+      {
+        "Name": "Compensation",
+        "URL": "https://www.teamblind.com/company/Amazon/posts/amazon-compensation"
+      },
+      {
+        "Name": "Focus",
+        "URL": "https://www.teamblind.com/company/Amazon/posts/amazon-focus"
+      },
+      {
+        "Name": "India",
+        "URL": "https://www.teamblind.com/company/Amazon/posts/amazon-india"
+      },
+      {
+        "Name": "Intern",
+        "URL": "https://www.teamblind.com/company/Amazon/posts/amazon-intern"
+      },
+      {
+        "Name": "Internal transfer",
+        "URL": "https://www.teamblind.com/company/Amazon/posts/amazon-internal-transfer"
+      },
+      {
+        "Name": "L5",
+        "URL": "https://www.teamblind.com/company/Amazon/posts/amazon-l5"
+      },
+      {
+        "Name": "L6",
+        "URL": "https://www.teamblind.com/company/Amazon/posts/amazon-l6"
+      },
+      {
+        "Name": "L7",
+        "URL": "https://www.teamblind.com/company/Amazon/posts/amazon-l7"
+      },
+      {
+        "Name": "London",
+        "URL": "https://www.teamblind.com/company/Amazon/posts/amazon-london"
+      },
+      {
+        "Name": "Music",
+        "URL": "https://www.teamblind.com/company/Amazon/posts/amazon-music"
+      },
+      {
+        "Name": "New grad",
+        "URL": "https://www.teamblind.com/company/Amazon/posts/amazon-new-grad"
+      },
+      {
+        "Name": "Offer",
+        "URL": "https://www.teamblind.com/company/Amazon/posts/amazon-offer"
+      },
+      {
+        "Name": "Pcs",
+        "URL": "https://www.teamblind.com/company/Amazon/posts/amazon-pcs"
+      },
+      {
+        "Name": "Pip",
+        "URL": "https://www.teamblind.com/company/Amazon/posts/amazon-pip"
+      },
+      {
+        "Name": "Refresher",
+        "URL": "https://www.teamblind.com/company/Amazon/posts/amazon-refresher"
+      },
+      {
+        "Name": "RSU",
+        "URL": "https://www.teamblind.com/company/Amazon/posts/amazon-rsu"
+      },
+      {
+        "Name": "Rto",
+        "URL": "https://www.teamblind.com/company/Amazon/posts/amazon-rto"
+      },
+      {
+        "Name": "Salary",
+        "URL": "https://www.teamblind.com/company/Amazon/posts/amazon-salary"
+      },
+      {
+        "Name": "Severance",
+        "URL": "https://www.teamblind.com/company/Amazon/posts/amazon-severance"
+      }
+    ]
+  },
+  {
+    "Symbol": "GOOGL",
+    "Company Name": "Alphabet Inc. (Class A)",
+    "Post URL": "https://www.teamblind.com/company/Google/posts",
+    "# Posts": 147000,
+    "Tags": [
+      {
+        "Name": "Interview",
+        "URL": "https://www.teamblind.com/company/Google/posts/google-interview"
+      },
+      {
+        "Name": "Layoffs",
+        "URL": "https://www.teamblind.com/company/Google/posts/google-layoffs"
+      },
+      {
+        "Name": "Culture",
+        "URL": "https://www.teamblind.com/company/Google/posts/google-culture"
+      },
+      {
+        "Name": "WLB",
+        "URL": "https://www.teamblind.com/company/Google/posts/google-wlb"
+      },
+      {
+        "Name": "Cloud",
+        "URL": "https://www.teamblind.com/company/Google/posts/google-cloud"
+      },
+      {
+        "Name": "Freeze",
+        "URL": "https://www.teamblind.com/company/Google/posts/google-freeze"
+      },
+      {
+        "Name": "Hc",
+        "URL": "https://www.teamblind.com/company/Google/posts/google-hc"
+      },
+      {
+        "Name": "India",
+        "URL": "https://www.teamblind.com/company/Google/posts/google-india"
+      },
+      {
+        "Name": "L3",
+        "URL": "https://www.teamblind.com/company/Google/posts/google-l3"
+      },
+      {
+        "Name": "L4",
+        "URL": "https://www.teamblind.com/company/Google/posts/google-l4"
+      },
+      {
+        "Name": "L5",
+        "URL": "https://www.teamblind.com/company/Google/posts/google-l5"
+      },
+      {
+        "Name": "L6",
+        "URL": "https://www.teamblind.com/company/Google/posts/google-l6"
+      },
+      {
+        "Name": "L7",
+        "URL": "https://www.teamblind.com/company/Google/posts/google-l7"
+      },
+      {
+        "Name": "Offer",
+        "URL": "https://www.teamblind.com/company/Google/posts/google-offer"
+      },
+      {
+        "Name": "Onsite",
+        "URL": "https://www.teamblind.com/company/Google/posts/google-onsite"
+      },
+      {
+        "Name": "Pip",
+        "URL": "https://www.teamblind.com/company/Google/posts/google-pip"
+      },
+      {
+        "Name": "Refresher",
+        "URL": "https://www.teamblind.com/company/Google/posts/google-refresher"
+      },
+      {
+        "Name": "RSU",
+        "URL": "https://www.teamblind.com/company/Google/posts/google-rsu"
+      },
+      {
+        "Name": "Rto",
+        "URL": "https://www.teamblind.com/company/Google/posts/google-rto"
+      },
+      {
+        "Name": "Team match",
+        "URL": "https://www.teamblind.com/company/Google/posts/google-team-match"
+      }
+    ]
+  },
+  {
+    "Symbol": "META",
+    "Company Name": "Meta Platforms",
+    "Post URL": "https://www.teamblind.com/company/Meta/posts",
+    "# Posts": 131000,
+    "Tags": [
+      {
+        "Name": "Interview",
+        "URL": "https://www.teamblind.com/company/Meta/posts/meta-interview"
+      },
+      {
+        "Name": "Layoffs",
+        "URL": "https://www.teamblind.com/company/Meta/posts/meta-layoffs"
+      },
+      {
+        "Name": "Culture",
+        "URL": "https://www.teamblind.com/company/Meta/posts/meta-culture"
+      },
+      {
+        "Name": "WLB",
+        "URL": "https://www.teamblind.com/company/Meta/posts/meta-wlb"
+      },
+      {
+        "Name": "Data engineer",
+        "URL": "https://www.teamblind.com/company/Meta/posts/meta-data-engineer"
+      },
+      {
+        "Name": "E4",
+        "URL": "https://www.teamblind.com/company/Meta/posts/meta-e4"
+      },
+      {
+        "Name": "E5",
+        "URL": "https://www.teamblind.com/company/Meta/posts/meta-e5"
+      },
+      {
+        "Name": "E6",
+        "URL": "https://www.teamblind.com/company/Meta/posts/meta-e6"
+      },
+      {
+        "Name": "Freeze",
+        "URL": "https://www.teamblind.com/company/Meta/posts/meta-freeze"
+      },
+      {
+        "Name": "Intern",
+        "URL": "https://www.teamblind.com/company/Meta/posts/meta-intern"
+      },
+      {
+        "Name": "London",
+        "URL": "https://www.teamblind.com/company/Meta/posts/meta-london"
+      },
+      {
+        "Name": "Offer",
+        "URL": "https://www.teamblind.com/company/Meta/posts/meta-offer"
+      },
+      {
+        "Name": "Onsite",
+        "URL": "https://www.teamblind.com/company/Meta/posts/meta-onsite"
+      },
+      {
+        "Name": "Perm",
+        "URL": "https://www.teamblind.com/company/Meta/posts/meta-perm"
+      },
+      {
+        "Name": "Pip",
+        "URL": "https://www.teamblind.com/company/Meta/posts/meta-pip"
+      },
+      {
+        "Name": "Pm",
+        "URL": "https://www.teamblind.com/company/Meta/posts/meta-pm"
+      },
+      {
+        "Name": "Refresher",
+        "URL": "https://www.teamblind.com/company/Meta/posts/meta-refresher"
+      },
+      {
+        "Name": "Remote",
+        "URL": "https://www.teamblind.com/company/Meta/posts/meta-remote"
+      },
+      {
+        "Name": "RSU",
+        "URL": "https://www.teamblind.com/company/Meta/posts/meta-rsu"
+      },
+      {
+        "Name": "Stock",
+        "URL": "https://www.teamblind.com/company/Meta/posts/meta-stock"
+      },
+      {
+        "Name": "Team match",
+        "URL": "https://www.teamblind.com/company/Meta/posts/meta-team-match"
+      },
+      {
+        "Name": "Tpm",
+        "URL": "https://www.teamblind.com/company/Meta/posts/meta-tpm"
+      }
+    ]
+  },
+  {
+    "Symbol": "MSFT",
+    "Company Name": "Microsoft",
+    "Post URL": "https://www.teamblind.com/company/Microsoft/posts",
+    "# Posts": 86000,
+    "Tags": [
+      {
+        "Name": "Interview",
+        "URL": "https://www.teamblind.com/company/Microsoft/posts/microsoft-interview"
+      },
+      {
+        "Name": "Layoffs",
+        "URL": "https://www.teamblind.com/company/Microsoft/posts/microsoft-layoffs"
+      },
+      {
+        "Name": "Culture",
+        "URL": "https://www.teamblind.com/company/Microsoft/posts/microsoft-culture"
+      },
+      {
+        "Name": "WLB",
+        "URL": "https://www.teamblind.com/company/Microsoft/posts/microsoft-wlb"
+      },
+      {
+        "Name": "Atlanta",
+        "URL": "https://www.teamblind.com/company/Microsoft/posts/microsoft-atlanta"
+      },
+      {
+        "Name": "Background check",
+        "URL": "https://www.teamblind.com/company/Microsoft/posts/microsoft-background-check"
+      },
+      {
+        "Name": "Bonus",
+        "URL": "https://www.teamblind.com/company/Microsoft/posts/microsoft-bonus"
+      },
+      {
+        "Name": "India",
+        "URL": "https://www.teamblind.com/company/Microsoft/posts/microsoft-india"
+      },
+      {
+        "Name": "Internal transfer",
+        "URL": "https://www.teamblind.com/company/Microsoft/posts/microsoft-internal-transfer"
+      },
+      {
+        "Name": "L62",
+        "URL": "https://www.teamblind.com/company/Microsoft/posts/microsoft-l62"
+      },
+      {
+        "Name": "L63",
+        "URL": "https://www.teamblind.com/company/Microsoft/posts/microsoft-l63"
+      },
+      {
+        "Name": "L64",
+        "URL": "https://www.teamblind.com/company/Microsoft/posts/microsoft-l64"
+      },
+      {
+        "Name": "L65",
+        "URL": "https://www.teamblind.com/company/Microsoft/posts/microsoft-l65"
+      },
+      {
+        "Name": "New grad",
+        "URL": "https://www.teamblind.com/company/Microsoft/posts/microsoft-new-grad"
+      },
+      {
+        "Name": "Offer",
+        "URL": "https://www.teamblind.com/company/Microsoft/posts/microsoft-offer"
+      },
+      {
+        "Name": "Pip",
+        "URL": "https://www.teamblind.com/company/Microsoft/posts/microsoft-pip"
+      },
+      {
+        "Name": "Promotion",
+        "URL": "https://www.teamblind.com/company/Microsoft/posts/microsoft-promotion"
+      },
+      {
+        "Name": "Refresher",
+        "URL": "https://www.teamblind.com/company/Microsoft/posts/microsoft-refresher"
+      },
+      {
+        "Name": "Remote",
+        "URL": "https://www.teamblind.com/company/Microsoft/posts/microsoft-remote"
+      },
+      {
+        "Name": "Rewards",
+        "URL": "https://www.teamblind.com/company/Microsoft/posts/microsoft-rewards"
+      },
+      {
+        "Name": "RSU",
+        "URL": "https://www.teamblind.com/company/Microsoft/posts/microsoft-rsu"
+      },
+      {
+        "Name": "Salary",
+        "URL": "https://www.teamblind.com/company/Microsoft/posts/microsoft-salary"
+      },
+      {
+        "Name": "Severance",
+        "URL": "https://www.teamblind.com/company/Microsoft/posts/microsoft-severance"
+      }
+    ]
+  },
+  {
+    "Symbol": "AAPL",
+    "Company Name": "Apple Inc.",
+    "Post URL": "https://www.teamblind.com/company/Apple/posts",
+    "# Posts": 57000,
+    "Tags": [
+      {
+        "Name": "Interview",
+        "URL": "https://www.teamblind.com/company/Apple/posts/apple-interview"
+      },
+      {
+        "Name": "Layoffs",
+        "URL": "https://www.teamblind.com/company/Apple/posts/apple-layoffs"
+      },
+      {
+        "Name": "Culture",
+        "URL": "https://www.teamblind.com/company/Apple/posts/apple-culture"
+      },
+      {
+        "Name": "WLB",
+        "URL": "https://www.teamblind.com/company/Apple/posts/apple-wlb"
+      },
+      {
+        "Name": "Amp",
+        "URL": "https://www.teamblind.com/company/Apple/posts/apple-amp"
+      },
+      {
+        "Name": "Austin",
+        "URL": "https://www.teamblind.com/company/Apple/posts/apple-austin"
+      },
+      {
+        "Name": "Bonus",
+        "URL": "https://www.teamblind.com/company/Apple/posts/apple-bonus"
+      },
+      {
+        "Name": "Discount",
+        "URL": "https://www.teamblind.com/company/Apple/posts/apple-discount"
+      },
+      {
+        "Name": "Epm",
+        "URL": "https://www.teamblind.com/company/Apple/posts/apple-epm"
+      },
+      {
+        "Name": "Ict3",
+        "URL": "https://www.teamblind.com/company/Apple/posts/apple-ict3"
+      },
+      {
+        "Name": "Ict4",
+        "URL": "https://www.teamblind.com/company/Apple/posts/apple-ict4"
+      },
+      {
+        "Name": "Ict5",
+        "URL": "https://www.teamblind.com/company/Apple/posts/apple-ict5"
+      },
+      {
+        "Name": "India",
+        "URL": "https://www.teamblind.com/company/Apple/posts/apple-india"
+      },
+      {
+        "Name": "London",
+        "URL": "https://www.teamblind.com/company/Apple/posts/apple-london"
+      },
+      {
+        "Name": "Offer",
+        "URL": "https://www.teamblind.com/company/Apple/posts/apple-offer"
+      },
+      {
+        "Name": "Onsite",
+        "URL": "https://www.teamblind.com/company/Apple/posts/apple-onsite"
+      },
+      {
+        "Name": "Performance review",
+        "URL": "https://www.teamblind.com/company/Apple/posts/apple-performance-review"
+      },
+      {
+        "Name": "Refresher",
+        "URL": "https://www.teamblind.com/company/Apple/posts/apple-refresher"
+      },
+      {
+        "Name": "Remote",
+        "URL": "https://www.teamblind.com/company/Apple/posts/apple-remote"
+      },
+      {
+        "Name": "Review",
+        "URL": "https://www.teamblind.com/company/Apple/posts/apple-review"
+      },
+      {
+        "Name": "RSU",
+        "URL": "https://www.teamblind.com/company/Apple/posts/apple-rsu"
+      },
+      {
+        "Name": "Rto",
+        "URL": "https://www.teamblind.com/company/Apple/posts/apple-rto"
+      },
+      {
+        "Name": "San diego",
+        "URL": "https://www.teamblind.com/company/Apple/posts/apple-san-diego"
+      }
+    ]
+  },
+  {
+    "Symbol": "V",
+    "Company Name": "Visa Inc.",
+    "Post URL": "https://www.teamblind.com/company/Visa/posts",
+    "# Posts": 44000,
+    "Tags": [
+      {
+        "Name": "Interview",
+        "URL": "https://www.teamblind.com/company/Visa/posts/visa-interview"
+      },
+      {
+        "Name": "Layoffs",
+        "URL": "https://www.teamblind.com/company/Visa/posts/visa-layoffs"
+      },
+      {
+        "Name": "Culture",
+        "URL": "https://www.teamblind.com/company/Visa/posts/visa-culture"
+      },
+      {
+        "Name": "WLB",
+        "URL": "https://www.teamblind.com/company/Visa/posts/visa-wlb"
+      },
+      {
+        "Name": "Refresher",
+        "URL": "https://www.teamblind.com/company/Visa/posts/visa-refresher"
+      },
+      {
+        "Name": "RSU",
+        "URL": "https://www.teamblind.com/company/Visa/posts/visa-rsu"
+      }
+    ]
+  },
+  {
+    "Symbol": "UBER",
+    "Company Name": "Uber",
+    "Post URL": "https://www.teamblind.com/company/Uber/posts",
+    "# Posts": 34000,
+    "Tags": [
+      {
+        "Name": "Interview",
+        "URL": "https://www.teamblind.com/company/Uber/posts/uber-interview"
+      },
+      {
+        "Name": "Layoffs",
+        "URL": "https://www.teamblind.com/company/Uber/posts/uber-layoffs"
+      },
+      {
+        "Name": "Culture",
+        "URL": "https://www.teamblind.com/company/Uber/posts/uber-culture"
+      },
+      {
+        "Name": "WLB",
+        "URL": "https://www.teamblind.com/company/Uber/posts/uber-wlb"
+      },
+      {
+        "Name": "5a",
+        "URL": "https://www.teamblind.com/company/Uber/posts/uber-5a"
+      },
+      {
+        "Name": "5b",
+        "URL": "https://www.teamblind.com/company/Uber/posts/uber-5b"
+      },
+      {
+        "Name": "Amsterdam",
+        "URL": "https://www.teamblind.com/company/Uber/posts/uber-amsterdam"
+      },
+      {
+        "Name": "Eats",
+        "URL": "https://www.teamblind.com/company/Uber/posts/uber-eats"
+      },
+      {
+        "Name": "India",
+        "URL": "https://www.teamblind.com/company/Uber/posts/uber-india"
+      },
+      {
+        "Name": "L4",
+        "URL": "https://www.teamblind.com/company/Uber/posts/uber-l4"
+      },
+      {
+        "Name": "L6",
+        "URL": "https://www.teamblind.com/company/Uber/posts/uber-l6"
+      },
+      {
+        "Name": "Offer",
+        "URL": "https://www.teamblind.com/company/Uber/posts/uber-offer"
+      },
+      {
+        "Name": "Pip",
+        "URL": "https://www.teamblind.com/company/Uber/posts/uber-pip"
+      },
+      {
+        "Name": "Refresher",
+        "URL": "https://www.teamblind.com/company/Uber/posts/uber-refresher"
+      },
+      {
+        "Name": "RSU",
+        "URL": "https://www.teamblind.com/company/Uber/posts/uber-rsu"
+      }
+    ]
+  },
+  {
+    "Symbol": "MTCH",
+    "Company Name": "Match Group",
+    "Post URL": "https://www.teamblind.com/company/Match/posts",
+    "# Posts": 26000,
+    "Tags": [
+      {
+        "Name": "Interview",
+        "URL": "https://www.teamblind.com/company/Match/posts/match-interview"
+      },
+      {
+        "Name": "Layoffs",
+        "URL": "https://www.teamblind.com/company/Match/posts/match-layoffs"
+      },
+      {
+        "Name": "Culture",
+        "URL": "https://www.teamblind.com/company/Match/posts/match-culture"
+      },
+      {
+        "Name": "WLB",
+        "URL": "https://www.teamblind.com/company/Match/posts/match-wlb"
+      }
+    ]
+  },
+  {
+    "Symbol": "NFLX",
+    "Company Name": "Netflix",
+    "Post URL": "https://www.teamblind.com/company/Netflix/posts",
+    "# Posts": 24000,
+    "Tags": [
+      {
+        "Name": "Interview",
+        "URL": "https://www.teamblind.com/company/Netflix/posts/netflix-interview"
+      },
+      {
+        "Name": "Layoffs",
+        "URL": "https://www.teamblind.com/company/Netflix/posts/netflix-layoffs"
+      },
+      {
+        "Name": "Culture",
+        "URL": "https://www.teamblind.com/company/Netflix/posts/netflix-culture"
+      },
+      {
+        "Name": "WLB",
+        "URL": "https://www.teamblind.com/company/Netflix/posts/netflix-wlb"
+      },
+      {
+        "Name": "Analytics engineer",
+        "URL": "https://www.teamblind.com/company/Netflix/posts/netflix-analytics-engineer"
+      },
+      {
+        "Name": "Benefits",
+        "URL": "https://www.teamblind.com/company/Netflix/posts/netflix-benefits"
+      },
+      {
+        "Name": "Data engineer",
+        "URL": "https://www.teamblind.com/company/Netflix/posts/netflix-data-engineer"
+      },
+      {
+        "Name": "L4",
+        "URL": "https://www.teamblind.com/company/Netflix/posts/netflix-l4"
+      },
+      {
+        "Name": "L5",
+        "URL": "https://www.teamblind.com/company/Netflix/posts/netflix-l5"
+      },
+      {
+        "Name": "Offer",
+        "URL": "https://www.teamblind.com/company/Netflix/posts/netflix-offer"
+      },
+      {
+        "Name": "Onsite",
+        "URL": "https://www.teamblind.com/company/Netflix/posts/netflix-onsite"
+      },
+      {
+        "Name": "Pip",
+        "URL": "https://www.teamblind.com/company/Netflix/posts/netflix-pip"
+      },
+      {
+        "Name": "Pm",
+        "URL": "https://www.teamblind.com/company/Netflix/posts/netflix-pm"
+      },
+      {
+        "Name": "Refresher",
+        "URL": "https://www.teamblind.com/company/Netflix/posts/netflix-refresher"
+      },
+      {
+        "Name": "Remote",
+        "URL": "https://www.teamblind.com/company/Netflix/posts/netflix-remote"
+      },
+      {
+        "Name": "RSU",
+        "URL": "https://www.teamblind.com/company/Netflix/posts/netflix-rsu"
+      },
+      {
+        "Name": "Salary",
+        "URL": "https://www.teamblind.com/company/Netflix/posts/netflix-salary"
+      }
+    ]
+  },
+  {
+    "Symbol": "TGT",
+    "Company Name": "Target Corporation",
+    "Post URL": "https://www.teamblind.com/company/Target/posts",
+    "# Posts": 21000,
+    "Tags": [
+      {
+        "Name": "Interview",
+        "URL": "https://www.teamblind.com/company/Target/posts/target-interview"
+      },
+      {
+        "Name": "Layoffs",
+        "URL": "https://www.teamblind.com/company/Target/posts/target-layoffs"
+      },
+      {
+        "Name": "Culture",
+        "URL": "https://www.teamblind.com/company/Target/posts/target-culture"
+      },
+      {
+        "Name": "WLB",
+        "URL": "https://www.teamblind.com/company/Target/posts/target-wlb"
+      }
+    ]
+  },
+  {
+    "Symbol": "NVDA",
+    "Company Name": "Nvidia",
+    "Post URL": "https://www.teamblind.com/company/NVIDIA/posts",
+    "# Posts": 17000,
+    "Tags": [
+      {
+        "Name": "Interview",
+        "URL": "https://www.teamblind.com/company/NVIDIA/posts/nvidia-interview"
+      },
+      {
+        "Name": "Layoffs",
+        "URL": "https://www.teamblind.com/company/NVIDIA/posts/nvidia-layoffs"
+      },
+      {
+        "Name": "WLB",
+        "URL": "https://www.teamblind.com/company/NVIDIA/posts/nvidia-wlb"
+      },
+      {
+        "Name": "Av",
+        "URL": "https://www.teamblind.com/company/NVIDIA/posts/nvidia-av"
+      },
+      {
+        "Name": "Director",
+        "URL": "https://www.teamblind.com/company/NVIDIA/posts/nvidia-director"
+      },
+      {
+        "Name": "Focal",
+        "URL": "https://www.teamblind.com/company/NVIDIA/posts/nvidia-focal"
+      },
+      {
+        "Name": "Hiring",
+        "URL": "https://www.teamblind.com/company/NVIDIA/posts/nvidia-hiring"
+      },
+      {
+        "Name": "Hiring freeze",
+        "URL": "https://www.teamblind.com/company/NVIDIA/posts/nvidia-hiring-freeze"
+      },
+      {
+        "Name": "Ic3",
+        "URL": "https://www.teamblind.com/company/NVIDIA/posts/nvidia-ic3"
+      },
+      {
+        "Name": "Ic4",
+        "URL": "https://www.teamblind.com/company/NVIDIA/posts/nvidia-ic4"
+      },
+      {
+        "Name": "Ic5",
+        "URL": "https://www.teamblind.com/company/NVIDIA/posts/nvidia-ic5"
+      },
+      {
+        "Name": "Ic6",
+        "URL": "https://www.teamblind.com/company/NVIDIA/posts/nvidia-ic6"
+      },
+      {
+        "Name": "India",
+        "URL": "https://www.teamblind.com/company/NVIDIA/posts/nvidia-india"
+      },
+      {
+        "Name": "Nvidia",
+        "URL": "https://www.teamblind.com/company/NVIDIA/posts/nvidia-nvidia"
+      },
+      {
+        "Name": "Offer",
+        "URL": "https://www.teamblind.com/company/NVIDIA/posts/nvidia-offer"
+      },
+      {
+        "Name": "Pip",
+        "URL": "https://www.teamblind.com/company/NVIDIA/posts/nvidia-pip"
+      },
+      {
+        "Name": "Referral",
+        "URL": "https://www.teamblind.com/company/NVIDIA/posts/nvidia-referral"
+      },
+      {
+        "Name": "Refresh",
+        "URL": "https://www.teamblind.com/company/NVIDIA/posts/nvidia-refresh"
+      },
+      {
+        "Name": "Refresher",
+        "URL": "https://www.teamblind.com/company/NVIDIA/posts/nvidia-refresher"
+      },
+      {
+        "Name": "Remote",
+        "URL": "https://www.teamblind.com/company/NVIDIA/posts/nvidia-remote"
+      },
+      {
+        "Name": "Salary",
+        "URL": "https://www.teamblind.com/company/NVIDIA/posts/nvidia-salary"
+      },
+      {
+        "Name": "Stock",
+        "URL": "https://www.teamblind.com/company/NVIDIA/posts/nvidia-stock"
+      },
+      {
+        "Name": "Tc",
+        "URL": "https://www.teamblind.com/company/NVIDIA/posts/nvidia-tc"
+      }
+    ]
+  },
+  {
+    "Symbol": "TSLA",
+    "Company Name": "Tesla, Inc.",
+    "Post URL": "https://www.teamblind.com/company/Tesla/posts",
+    "# Posts": 17000,
+    "Tags": [
+      {
+        "Name": "Interview",
+        "URL": "https://www.teamblind.com/company/Tesla/posts/tesla-interview"
+      },
+      {
+        "Name": "Motors culture",
+        "URL": "https://www.teamblind.com/company/Tesla/posts/tesla-motors-culture"
+      },
+      {
+        "Name": "Motors interview",
+        "URL": "https://www.teamblind.com/company/Tesla/posts/tesla-motors-interview"
+      },
+      {
+        "Name": "Motors layoffs",
+        "URL": "https://www.teamblind.com/company/Tesla/posts/tesla-motors-layoffs"
+      },
+      {
+        "Name": "Motors refresher",
+        "URL": "https://www.teamblind.com/company/Tesla/posts/tesla-motors-refresher"
+      },
+      {
+        "Name": "Motors rsu",
+        "URL": "https://www.teamblind.com/company/Tesla/posts/tesla-motors-rsu"
+      },
+      {
+        "Name": "Motors wlb",
+        "URL": "https://www.teamblind.com/company/Tesla/posts/tesla-motors-wlb"
+      }
+    ]
+  },
+  {
+    "Symbol": "ORCL",
+    "Company Name": "Oracle Corporation",
+    "Post URL": "https://www.teamblind.com/company/Oracle/posts",
+    "# Posts": 16000,
+    "Tags": [
+      {
+        "Name": "Interview",
+        "URL": "https://www.teamblind.com/company/Oracle/posts/oracle-interview"
+      },
+      {
+        "Name": "Layoffs",
+        "URL": "https://www.teamblind.com/company/Oracle/posts/oracle-layoffs"
+      },
+      {
+        "Name": "Culture",
+        "URL": "https://www.teamblind.com/company/Oracle/posts/oracle-culture"
+      },
+      {
+        "Name": "WLB",
+        "URL": "https://www.teamblind.com/company/Oracle/posts/oracle-wlb"
+      },
+      {
+        "Name": "Cerner",
+        "URL": "https://www.teamblind.com/company/Oracle/posts/oracle-cerner"
+      },
+      {
+        "Name": "Cloud",
+        "URL": "https://www.teamblind.com/company/Oracle/posts/oracle-cloud"
+      },
+      {
+        "Name": "Cloud infrastructur",
+        "URL": "https://www.teamblind.com/company/Oracle/posts/oracle-cloud-infrastructur"
+      },
+      {
+        "Name": "Director",
+        "URL": "https://www.teamblind.com/company/Oracle/posts/oracle-director"
+      },
+      {
+        "Name": "Health",
+        "URL": "https://www.teamblind.com/company/Oracle/posts/oracle-health"
+      },
+      {
+        "Name": "Ic2",
+        "URL": "https://www.teamblind.com/company/Oracle/posts/oracle-ic2"
+      },
+      {
+        "Name": "Ic3",
+        "URL": "https://www.teamblind.com/company/Oracle/posts/oracle-ic3"
+      },
+      {
+        "Name": "Ic4",
+        "URL": "https://www.teamblind.com/company/Oracle/posts/oracle-ic4"
+      },
+      {
+        "Name": "Ic5",
+        "URL": "https://www.teamblind.com/company/Oracle/posts/oracle-ic5"
+      },
+      {
+        "Name": "India",
+        "URL": "https://www.teamblind.com/company/Oracle/posts/oracle-india"
+      },
+      {
+        "Name": "Oci",
+        "URL": "https://www.teamblind.com/company/Oracle/posts/oracle-oci"
+      },
+      {
+        "Name": "Offer",
+        "URL": "https://www.teamblind.com/company/Oracle/posts/oracle-offer"
+      },
+      {
+        "Name": "Refresher",
+        "URL": "https://www.teamblind.com/company/Oracle/posts/oracle-refresher"
+      },
+      {
+        "Name": "RSU",
+        "URL": "https://www.teamblind.com/company/Oracle/posts/oracle-rsu"
+      },
+      {
+        "Name": "Salary",
+        "URL": "https://www.teamblind.com/company/Oracle/posts/oracle-salary"
+      },
+      {
+        "Name": "Stock",
+        "URL": "https://www.teamblind.com/company/Oracle/posts/oracle-stock"
+      }
+    ]
+  },
+  {
+    "Symbol": "ADBE",
+    "Company Name": "Adobe Inc.",
+    "Post URL": "https://www.teamblind.com/company/Adobe/posts",
+    "# Posts": 14000,
+    "Tags": [
+      {
+        "Name": "Interview",
+        "URL": "https://www.teamblind.com/company/Adobe/posts/adobe-interview"
+      },
+      {
+        "Name": "Layoffs",
+        "URL": "https://www.teamblind.com/company/Adobe/posts/adobe-layoffs"
+      },
+      {
+        "Name": "Culture",
+        "URL": "https://www.teamblind.com/company/Adobe/posts/adobe-culture"
+      },
+      {
+        "Name": "WLB",
+        "URL": "https://www.teamblind.com/company/Adobe/posts/adobe-wlb"
+      },
+      {
+        "Name": "Cs2",
+        "URL": "https://www.teamblind.com/company/Adobe/posts/adobe-cs2"
+      },
+      {
+        "Name": "Director",
+        "URL": "https://www.teamblind.com/company/Adobe/posts/adobe-director"
+      },
+      {
+        "Name": "Dx",
+        "URL": "https://www.teamblind.com/company/Adobe/posts/adobe-dx"
+      },
+      {
+        "Name": "India",
+        "URL": "https://www.teamblind.com/company/Adobe/posts/adobe-india"
+      },
+      {
+        "Name": "Levels",
+        "URL": "https://www.teamblind.com/company/Adobe/posts/adobe-levels"
+      },
+      {
+        "Name": "Noida",
+        "URL": "https://www.teamblind.com/company/Adobe/posts/adobe-noida"
+      },
+      {
+        "Name": "Offer",
+        "URL": "https://www.teamblind.com/company/Adobe/posts/adobe-offer"
+      },
+      {
+        "Name": "Pip",
+        "URL": "https://www.teamblind.com/company/Adobe/posts/adobe-pip"
+      },
+      {
+        "Name": "Product manager",
+        "URL": "https://www.teamblind.com/company/Adobe/posts/adobe-product-manager"
+      },
+      {
+        "Name": "Refresher",
+        "URL": "https://www.teamblind.com/company/Adobe/posts/adobe-refresher"
+      },
+      {
+        "Name": "RSU",
+        "URL": "https://www.teamblind.com/company/Adobe/posts/adobe-rsu"
+      },
+      {
+        "Name": "Salary",
+        "URL": "https://www.teamblind.com/company/Adobe/posts/adobe-salary"
+      },
+      {
+        "Name": "Stock",
+        "URL": "https://www.teamblind.com/company/Adobe/posts/adobe-stock"
+      }
+    ]
+  },
+  {
+    "Symbol": "COIN",
+    "Company Name": "Coinbase",
+    "Post URL": "https://www.teamblind.com/company/Coinbase/posts",
+    "# Posts": 13000,
+    "Tags": [
+      {
+        "Name": "Interview",
+        "URL": "https://www.teamblind.com/company/Coinbase/posts/coinbase-interview"
+      },
+      {
+        "Name": "Layoffs",
+        "URL": "https://www.teamblind.com/company/Coinbase/posts/coinbase-layoffs"
+      },
+      {
+        "Name": "Culture",
+        "URL": "https://www.teamblind.com/company/Coinbase/posts/coinbase-culture"
+      },
+      {
+        "Name": "WLB",
+        "URL": "https://www.teamblind.com/company/Coinbase/posts/coinbase-wlb"
+      },
+      {
+        "Name": "Canada",
+        "URL": "https://www.teamblind.com/company/Coinbase/posts/coinbase-canada"
+      },
+      {
+        "Name": "Em",
+        "URL": "https://www.teamblind.com/company/Coinbase/posts/coinbase-em"
+      },
+      {
+        "Name": "Frontend",
+        "URL": "https://www.teamblind.com/company/Coinbase/posts/coinbase-frontend"
+      },
+      {
+        "Name": "Ic4",
+        "URL": "https://www.teamblind.com/company/Coinbase/posts/coinbase-ic4"
+      },
+      {
+        "Name": "Ic5",
+        "URL": "https://www.teamblind.com/company/Coinbase/posts/coinbase-ic5"
+      },
+      {
+        "Name": "India",
+        "URL": "https://www.teamblind.com/company/Coinbase/posts/coinbase-india"
+      },
+      {
+        "Name": "New grad",
+        "URL": "https://www.teamblind.com/company/Coinbase/posts/coinbase-new-grad"
+      },
+      {
+        "Name": "Offer",
+        "URL": "https://www.teamblind.com/company/Coinbase/posts/coinbase-offer"
+      },
+      {
+        "Name": "Onsite",
+        "URL": "https://www.teamblind.com/company/Coinbase/posts/coinbase-onsite"
+      },
+      {
+        "Name": "Pm",
+        "URL": "https://www.teamblind.com/company/Coinbase/posts/coinbase-pm"
+      },
+      {
+        "Name": "Refresher",
+        "URL": "https://www.teamblind.com/company/Coinbase/posts/coinbase-refresher"
+      },
+      {
+        "Name": "RSU",
+        "URL": "https://www.teamblind.com/company/Coinbase/posts/coinbase-rsu"
+      }
+    ]
+  },
+  {
+    "Symbol": "DASH",
+    "Company Name": "DoorDash",
+    "Post URL": "https://www.teamblind.com/company/DoorDash/posts",
+    "# Posts": 13000,
+    "Tags": [
+      {
+        "Name": "Interview",
+        "URL": "https://www.teamblind.com/company/DoorDash/posts/doordash-interview"
+      },
+      {
+        "Name": "Layoffs",
+        "URL": "https://www.teamblind.com/company/DoorDash/posts/doordash-layoffs"
+      },
+      {
+        "Name": "Culture",
+        "URL": "https://www.teamblind.com/company/DoorDash/posts/doordash-culture"
+      },
+      {
+        "Name": "WLB",
+        "URL": "https://www.teamblind.com/company/DoorDash/posts/doordash-wlb"
+      },
+      {
+        "Name": "Data engineer",
+        "URL": "https://www.teamblind.com/company/DoorDash/posts/doordash-data-engineer"
+      },
+      {
+        "Name": "Data scientist",
+        "URL": "https://www.teamblind.com/company/DoorDash/posts/doordash-data-scientist"
+      },
+      {
+        "Name": "E4",
+        "URL": "https://www.teamblind.com/company/DoorDash/posts/doordash-e4"
+      },
+      {
+        "Name": "E5",
+        "URL": "https://www.teamblind.com/company/DoorDash/posts/doordash-e5"
+      },
+      {
+        "Name": "E6",
+        "URL": "https://www.teamblind.com/company/DoorDash/posts/doordash-e6"
+      },
+      {
+        "Name": "Frontend",
+        "URL": "https://www.teamblind.com/company/DoorDash/posts/doordash-frontend"
+      },
+      {
+        "Name": "Ios",
+        "URL": "https://www.teamblind.com/company/DoorDash/posts/doordash-ios"
+      },
+      {
+        "Name": "Offer",
+        "URL": "https://www.teamblind.com/company/DoorDash/posts/doordash-offer"
+      },
+      {
+        "Name": "Onsite",
+        "URL": "https://www.teamblind.com/company/DoorDash/posts/doordash-onsite"
+      },
+      {
+        "Name": "Phone screen",
+        "URL": "https://www.teamblind.com/company/DoorDash/posts/doordash-phone-screen"
+      },
+      {
+        "Name": "Pip",
+        "URL": "https://www.teamblind.com/company/DoorDash/posts/doordash-pip"
+      },
+      {
+        "Name": "Pm",
+        "URL": "https://www.teamblind.com/company/DoorDash/posts/doordash-pm"
+      },
+      {
+        "Name": "Refresher",
+        "URL": "https://www.teamblind.com/company/DoorDash/posts/doordash-refresher"
+      },
+      {
+        "Name": "RSU",
+        "URL": "https://www.teamblind.com/company/DoorDash/posts/doordash-rsu"
+      },
+      {
+        "Name": "Strategy",
+        "URL": "https://www.teamblind.com/company/DoorDash/posts/doordash-strategy"
+      },
+      {
+        "Name": "System design",
+        "URL": "https://www.teamblind.com/company/DoorDash/posts/doordash-system-design"
+      }
+    ]
+  },
+  {
+    "Symbol": "HOOD",
+    "Company Name": "Robinhood Markets",
+    "Post URL": "https://www.teamblind.com/company/Robinhood/posts",
+    "# Posts": 12000,
+    "Tags": [
+      {
+        "Name": "Interview",
+        "URL": "https://www.teamblind.com/company/Robinhood/posts/robinhood-interview"
+      },
+      {
+        "Name": "Layoffs",
+        "URL": "https://www.teamblind.com/company/Robinhood/posts/robinhood-layoffs"
+      },
+      {
+        "Name": "Culture",
+        "URL": "https://www.teamblind.com/company/Robinhood/posts/robinhood-culture"
+      },
+      {
+        "Name": "WLB",
+        "URL": "https://www.teamblind.com/company/Robinhood/posts/robinhood-wlb"
+      },
+      {
+        "Name": "Android",
+        "URL": "https://www.teamblind.com/company/Robinhood/posts/robinhood-android"
+      },
+      {
+        "Name": "New grad",
+        "URL": "https://www.teamblind.com/company/Robinhood/posts/robinhood-new-grad"
+      },
+      {
+        "Name": "Offer",
+        "URL": "https://www.teamblind.com/company/Robinhood/posts/robinhood-offer"
+      },
+      {
+        "Name": "Onsite",
+        "URL": "https://www.teamblind.com/company/Robinhood/posts/robinhood-onsite"
+      },
+      {
+        "Name": "Refresher",
+        "URL": "https://www.teamblind.com/company/Robinhood/posts/robinhood-refresher"
+      },
+      {
+        "Name": "RSU",
+        "URL": "https://www.teamblind.com/company/Robinhood/posts/robinhood-rsu"
+      }
+    ]
+  },
+  {
+    "Symbol": "PYPL",
+    "Company Name": "PayPal",
+    "Post URL": "https://www.teamblind.com/company/PayPal/posts",
+    "# Posts": 12000,
+    "Tags": [
+      {
+        "Name": "Interview",
+        "URL": "https://www.teamblind.com/company/PayPal/posts/paypal-interview"
+      },
+      {
+        "Name": "Layoffs",
+        "URL": "https://www.teamblind.com/company/PayPal/posts/paypal-layoffs"
+      },
+      {
+        "Name": "Culture",
+        "URL": "https://www.teamblind.com/company/PayPal/posts/paypal-culture"
+      },
+      {
+        "Name": "WLB",
+        "URL": "https://www.teamblind.com/company/PayPal/posts/paypal-wlb"
+      },
+      {
+        "Name": "Chennai",
+        "URL": "https://www.teamblind.com/company/PayPal/posts/paypal-chennai"
+      },
+      {
+        "Name": "Data scientist",
+        "URL": "https://www.teamblind.com/company/PayPal/posts/paypal-data-scientist"
+      },
+      {
+        "Name": "Director",
+        "URL": "https://www.teamblind.com/company/PayPal/posts/paypal-director"
+      },
+      {
+        "Name": "India",
+        "URL": "https://www.teamblind.com/company/PayPal/posts/paypal-india"
+      },
+      {
+        "Name": "Offer",
+        "URL": "https://www.teamblind.com/company/PayPal/posts/paypal-offer"
+      },
+      {
+        "Name": "Product manager",
+        "URL": "https://www.teamblind.com/company/PayPal/posts/paypal-product-manager"
+      },
+      {
+        "Name": "Promotion",
+        "URL": "https://www.teamblind.com/company/PayPal/posts/paypal-promotion"
+      },
+      {
+        "Name": "Refresher",
+        "URL": "https://www.teamblind.com/company/PayPal/posts/paypal-refresher"
+      },
+      {
+        "Name": "Remote",
+        "URL": "https://www.teamblind.com/company/PayPal/posts/paypal-remote"
+      },
+      {
+        "Name": "RSU",
+        "URL": "https://www.teamblind.com/company/PayPal/posts/paypal-rsu"
+      },
+      {
+        "Name": "Severance",
+        "URL": "https://www.teamblind.com/company/PayPal/posts/paypal-severance"
+      },
+      {
+        "Name": "Singapore",
+        "URL": "https://www.teamblind.com/company/PayPal/posts/paypal-singapore"
+      },
+      {
+        "Name": "T24",
+        "URL": "https://www.teamblind.com/company/PayPal/posts/paypal-t24"
+      },
+      {
+        "Name": "T25",
+        "URL": "https://www.teamblind.com/company/PayPal/posts/paypal-t25"
+      },
+      {
+        "Name": "T26",
+        "URL": "https://www.teamblind.com/company/PayPal/posts/paypal-t26"
+      }
+    ]
+  },
+  {
+    "Symbol": "WMT",
+    "Company Name": "Walmart",
+    "Post URL": "https://www.teamblind.com/company/Walmart/posts",
+    "# Posts": 12000,
+    "Tags": [
+      {
+        "Name": "Interview",
+        "URL": "https://www.teamblind.com/company/Walmart/posts/walmart-interview"
+      },
+      {
+        "Name": "Layoffs",
+        "URL": "https://www.teamblind.com/company/Walmart/posts/walmart-layoffs"
+      },
+      {
+        "Name": "Culture",
+        "URL": "https://www.teamblind.com/company/Walmart/posts/walmart-culture"
+      },
+      {
+        "Name": "WLB",
+        "URL": "https://www.teamblind.com/company/Walmart/posts/walmart-wlb"
+      },
+      {
+        "Name": "Bonus",
+        "URL": "https://www.teamblind.com/company/Walmart/posts/walmart-bonus"
+      },
+      {
+        "Name": "Connect",
+        "URL": "https://www.teamblind.com/company/Walmart/posts/walmart-connect"
+      },
+      {
+        "Name": "Data scientist",
+        "URL": "https://www.teamblind.com/company/Walmart/posts/walmart-data-scientist"
+      },
+      {
+        "Name": "Director",
+        "URL": "https://www.teamblind.com/company/Walmart/posts/walmart-director"
+      },
+      {
+        "Name": "Global tech",
+        "URL": "https://www.teamblind.com/company/Walmart/posts/walmart-global-tech"
+      },
+      {
+        "Name": "India",
+        "URL": "https://www.teamblind.com/company/Walmart/posts/walmart-india"
+      },
+      {
+        "Name": "Karat",
+        "URL": "https://www.teamblind.com/company/Walmart/posts/walmart-karat"
+      },
+      {
+        "Name": "Offer",
+        "URL": "https://www.teamblind.com/company/Walmart/posts/walmart-offer"
+      },
+      {
+        "Name": "Pip",
+        "URL": "https://www.teamblind.com/company/Walmart/posts/walmart-pip"
+      },
+      {
+        "Name": "Promotion",
+        "URL": "https://www.teamblind.com/company/Walmart/posts/walmart-promotion"
+      },
+      {
+        "Name": "Refresher",
+        "URL": "https://www.teamblind.com/company/Walmart/posts/walmart-refresher"
+      },
+      {
+        "Name": "Relocation",
+        "URL": "https://www.teamblind.com/company/Walmart/posts/walmart-relocation"
+      },
+      {
+        "Name": "RSU",
+        "URL": "https://www.teamblind.com/company/Walmart/posts/walmart-rsu"
+      },
+      {
+        "Name": "Salary",
+        "URL": "https://www.teamblind.com/company/Walmart/posts/walmart-salary"
+      },
+      {
+        "Name": "Senior manager",
+        "URL": "https://www.teamblind.com/company/Walmart/posts/walmart-senior-manager"
+      }
+    ]
+  }
+]

@@ -1,0 +1,302 @@
+[
+  {
+    "Symbol": "INTC",
+    "Company Name": "Intel",
+    "Post URL": "https://www.teamblind.com/company/Intel/posts",
+    "# Posts": 10000
+  },
+  {
+    "Symbol": "XYZ",
+    "Company Name": "Block, Inc.",
+    "Post URL": "https://www.teamblind.com/company/Block/posts",
+    "# Posts": 8818
+  },
+  {
+    "Symbol": "CSCO",
+    "Company Name": "Cisco",
+    "Post URL": "https://www.teamblind.com/company/Cisco/posts",
+    "# Posts": 8312
+  },
+  {
+    "Symbol": "JPM",
+    "Company Name": "JPMorgan Chase",
+    "Post URL": "https://www.teamblind.com/company/JPMorgan/posts",
+    "# Posts": 7718
+  },
+  {
+    "Symbol": "NOW",
+    "Company Name": "ServiceNow",
+    "Post URL": "https://www.teamblind.com/company/ServiceNow/posts",
+    "# Posts": 7286
+  },
+  {
+    "Symbol": "DDOG",
+    "Company Name": "Datadog",
+    "Post URL": "https://www.teamblind.com/company/Datadog/posts",
+    "# Posts": 7075
+  },
+  {
+    "Symbol": "WDAY",
+    "Company Name": "Workday, Inc.",
+    "Post URL": "https://www.teamblind.com/company/Workday/posts",
+    "# Posts": 6247
+  },
+  {
+    "Symbol": "QCOM",
+    "Company Name": "Qualcomm",
+    "Post URL": "https://www.teamblind.com/company/Qualcomm/posts",
+    "# Posts": 6181
+  },
+  {
+    "Symbol": "IBM",
+    "Company Name": "IBM",
+    "Post URL": "https://www.teamblind.com/company/IBM/posts",
+    "# Posts": 5841
+  },
+  {
+    "Symbol": "EBAY",
+    "Company Name": "eBay Inc.",
+    "Post URL": "https://www.teamblind.com/company/eBay/posts",
+    "# Posts": 5800
+  },
+  {
+    "Symbol": "PLTR",
+    "Company Name": "Palantir Technologies",
+    "Post URL": "https://www.teamblind.com/company/Palantir/posts",
+    "# Posts": 5790
+  },
+  {
+    "Symbol": "AMD",
+    "Company Name": "Advanced Micro Devices",
+    "Post URL": "https://www.teamblind.com/company/AMD/posts",
+    "# Posts": 5523
+  },
+  {
+    "Symbol": "GS",
+    "Company Name": "Goldman Sachs",
+    "Post URL": "https://www.teamblind.com/company/Goldman-Sachs/posts",
+    "# Posts": 5327
+  },
+  {
+    "Symbol": "COF",
+    "Company Name": "Capital One",
+    "Post URL": "https://www.teamblind.com/company/Capital-One/posts",
+    "# Posts": 4751
+  },
+  {
+    "Symbol": "UPS",
+    "Company Name": "United Parcel Service",
+    "Post URL": "https://www.teamblind.com/company/UPS/posts",
+    "# Posts": 4451
+  },
+  {
+    "Symbol": "SNA",
+    "Company Name": "Snap-on",
+    "Post URL": "https://www.teamblind.com/company/Snap-on/posts",
+    "# Posts": 4093
+  },
+  {
+    "Symbol": "CRM",
+    "Company Name": "Salesforce",
+    "Post URL": "https://www.teamblind.com/company/Salesforce/posts",
+    "# Posts": 3659
+  },
+  {
+    "Symbol": "DIS",
+    "Company Name": "Walt Disney Company (The)",
+    "Post URL": "https://www.teamblind.com/company/The-Walt-Disney-Company/posts",
+    "# Posts": 3323
+  },
+  {
+    "Symbol": "AXP",
+    "Company Name": "American Express",
+    "Post URL": "https://www.teamblind.com/company/American-Express/posts",
+    "# Posts": 3190
+  },
+  {
+    "Symbol": "DELL",
+    "Company Name": "Dell Technologies",
+    "Post URL": "https://www.teamblind.com/company/Dell/posts",
+    "# Posts": 2999
+  },
+  {
+    "Symbol": "AVGO",
+    "Company Name": "Broadcom",
+    "Post URL": "https://www.teamblind.com/company/Broadcom/posts",
+    "# Posts": 2920
+  },
+  {
+    "Symbol": "BBY",
+    "Company Name": "Best Buy",
+    "Post URL": "https://www.teamblind.com/company/Best-Buy/posts",
+    "# Posts": 2883
+  },
+  {
+    "Symbol": "BLK",
+    "Company Name": "BlackRock",
+    "Post URL": "https://www.teamblind.com/company/BlackRock/posts",
+    "# Posts": 2869
+  },
+  {
+    "Symbol": "MA",
+    "Company Name": "Mastercard",
+    "Post URL": "https://www.teamblind.com/company/Mastercard/posts",
+    "# Posts": 2724
+  },
+  {
+    "Symbol": "ADSK",
+    "Company Name": "Autodesk",
+    "Post URL": "https://www.teamblind.com/company/Autodesk/posts",
+    "# Posts": 2550
+  },
+  {
+    "Symbol": "CRWD",
+    "Company Name": "CrowdStrike",
+    "Post URL": "https://www.teamblind.com/company/CrowdStrike/posts",
+    "# Posts": 2499
+  },
+  {
+    "Symbol": "C",
+    "Company Name": "Citigroup",
+    "Post URL": "https://www.teamblind.com/company/Citi/posts",
+    "# Posts": 2171
+  },
+  {
+    "Symbol": "AES",
+    "Company Name": "AES Corporation",
+    "Post URL": "https://www.teamblind.com/company/AES/posts",
+    "# Posts": 2130
+  },
+  {
+    "Symbol": "GEN",
+    "Company Name": "Gen Digital",
+    "Post URL": "https://www.teamblind.com/company/Gen/posts",
+    "# Posts": 2092
+  },
+  {
+    "Symbol": "COST",
+    "Company Name": "Costco",
+    "Post URL": "https://www.teamblind.com/company/Costco/posts",
+    "# Posts": 1978
+  },
+  {
+    "Symbol": "ACN",
+    "Company Name": "Accenture",
+    "Post URL": "https://www.teamblind.com/company/Accenture/posts",
+    "# Posts": 1959
+  },
+  {
+    "Symbol": "VZ",
+    "Company Name": "Verizon",
+    "Post URL": "https://www.teamblind.com/company/Verizon/posts",
+    "# Posts": 1842
+  },
+  {
+    "Symbol": "BA",
+    "Company Name": "Boeing",
+    "Post URL": "https://www.teamblind.com/company/Boeing/posts",
+    "# Posts": 1815
+  },
+  {
+    "Symbol": "HPQ",
+    "Company Name": "HP Inc.",
+    "Post URL": "https://www.teamblind.com/company/HP/posts",
+    "# Posts": 1803
+  },
+  {
+    "Symbol": "INTU",
+    "Company Name": "Intuit",
+    "Post URL": "https://www.teamblind.com/company/Intuit/posts",
+    "# Posts": 1713
+  },
+  {
+    "Symbol": "TMUS",
+    "Company Name": "T-Mobile US",
+    "Post URL": "https://www.teamblind.com/company/T-Mobile/posts",
+    "# Posts": 1668
+  },
+  {
+    "Symbol": "MS",
+    "Company Name": "Morgan Stanley",
+    "Post URL": "https://www.teamblind.com/company/Morgan-Stanley/posts",
+    "# Posts": 1490
+  },
+  {
+    "Symbol": "MMM",
+    "Company Name": "3M",
+    "Post URL": "https://www.teamblind.com/company/3M/posts",
+    "# Posts": 1470
+  },
+  {
+    "Symbol": "GM",
+    "Company Name": "General Motors",
+    "Post URL": "https://www.teamblind.com/company/General-Motors/posts",
+    "# Posts": 1415
+  },
+  {
+    "Symbol": "F",
+    "Company Name": "Ford Motor Company",
+    "Post URL": "https://www.teamblind.com/company/Ford/posts",
+    "# Posts": 1396
+  },
+  {
+    "Symbol": "BAC",
+    "Company Name": "Bank of America",
+    "Post URL": "https://www.teamblind.com/company/Bank-of-America/posts",
+    "# Posts": 1386
+  },
+  {
+    "Symbol": "NTAP",
+    "Company Name": "NetApp",
+    "Post URL": "https://www.teamblind.com/company/NetApp/posts",
+    "# Posts": 1289
+  },
+  {
+    "Symbol": "T",
+    "Company Name": "AT&T",
+    "Post URL": "https://www.teamblind.com/company/AT&T/posts",
+    "# Posts": 1248
+  },
+  {
+    "Symbol": "NKE",
+    "Company Name": "Nike, Inc.",
+    "Post URL": "https://www.teamblind.com/company/Nike/posts",
+    "# Posts": 1236
+  },
+  {
+    "Symbol": "FDS",
+    "Company Name": "FactSet",
+    "Post URL": "https://www.teamblind.com/company/FactSet/posts",
+    "# Posts": 1164
+  },
+  {
+    "Symbol": "PANW",
+    "Company Name": "Palo Alto Networks",
+    "Post URL": "https://www.teamblind.com/company/Palo-Alto-Networks/posts",
+    "# Posts": 1151
+  },
+  {
+    "Symbol": "EXPD",
+    "Company Name": "Expeditors International",
+    "Post URL": "https://www.teamblind.com/company/Expeditors/posts",
+    "# Posts": 1114
+  },
+  {
+    "Symbol": "SBUX",
+    "Company Name": "Starbucks",
+    "Post URL": "https://www.teamblind.com/company/Starbucks/posts",
+    "# Posts": 1113
+  },
+  {
+    "Symbol": "WFC",
+    "Company Name": "Wells Fargo",
+    "Post URL": "https://www.teamblind.com/company/Wells-Fargo/posts",
+    "# Posts": 1039
+  },
+  {
+    "Symbol": "ABT",
+    "Company Name": "Abbott Laboratories",
+    "Post URL": "https://www.teamblind.com/company/Abbott/posts",
+    "# Posts": 1007
+  }
+]

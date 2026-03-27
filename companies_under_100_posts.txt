@@ -1,0 +1,266 @@
+                      Company Name  # Posts
+                            Lowe's       97
+                            Paycom       97
+                         KKR & Co.       88
+              McKesson Corporation       87
+               Synchrony Financial       87
+                  Truist Financial       87
+                           Aon plc       81
+            Cadence Design Systems       76
+               Centene Corporation       76
+      American International Group       74
+                   Deere & Company       73
+                     Kinder Morgan       72
+                       Lilly (Eli)       70
+               News Corp (Class A)       66
+               International Paper       63
+                   Electronic Arts       59
+                  Jacobs Solutions       59
+              Constellation Energy       58
+                            Dexcom       58
+                           Invesco       57
+                           Labcorp       57
+                        Globe Life       52
+                            Biogen       50
+                  Procter & Gamble       50
+                        CBRE Group       49
+                   Gilead Sciences       49
+                     T. Rowe Price       49
+                          PTC Inc.       46
+                      Trimble Inc.       46
+                        CVS Health       45
+                       First Solar       44
+             Genuine Parts Company       41
+                   Delta Air Lines       40
+                 Eaton Corporation       40
+                    Hartford (The)       40
+                UnitedHealth Group       40
+                   Elevance Health       39
+         Intercontinental Exchange       39
+                  Invitation Homes       38
+                           Paychex       38
+                      Schlumberger       38
+                       Yum! Brands       37
+               Cboe Global Markets       36
+                        Supermicro       36
+              Bristol Myers Squibb       35
+                       Dollar Tree       35
+                  Johnson Controls       34
+              Baxter International       33
+              Prudential Financial       33
+          Thermo Fisher Scientific       33
+                 Boston Scientific       32
+                     C.H. Robinson       32
+                    Tapestry, Inc.       32
+                     Chubb Limited       31
+                   CDW Corporation       31
+International Flavors & Fragrances       31
+                  Emerson Electric       29
+                    American Tower       28
+                     General Mills       28
+         Regeneron Pharmaceuticals       28
+            Charter Communications       27
+                   Cardinal Health       26
+                          Dayforce       26
+                            Paccar       26
+               Danaher Corporation       25
+                          M&T Bank       25
+                     TJX Companies       25
+    Broadridge Financial Solutions       24
+                       MGM Resorts       24
+                  ON Semiconductor       24
+             Royal Caribbean Group       24
+                            ResMed       24
+                         CME Group       23
+                           KeyCorp       23
+                    Marsh McLennan       22
+           Raymond James Financial       22
+              Ameriprise Financial       20
+                      Baker Hughes       20
+                      CoStar Group       20
+         Principal Financial Group       20
+                          Fastenal       19
+              Microchip Technology       18
+     Regions Financial Corporation       18
+                 Republic Services       18
+                   TE Connectivity       18
+                            Copart       17
+                       Tyson Foods       17
+                   Ares Management       16
+                            DuPont       16
+                            Hasbro       16
+                         NVR, Inc.       16
+                             Sysco       16
+                          Teradyne       16
+                  Monster Beverage       15
+          Ralph Lauren Corporation       15
+         Union Pacific Corporation       15
+             Williams-Sonoma, Inc.       15
+                  Ball Corporation       14
+      Estée Lauder Companies (The)       14
+                       Halliburton       14
+                             Jabil       14
+                    NextEra Energy       14
+                       Ulta Beauty       14
+                Zebra Technologies       14
+                          L3Harris       13
+              Constellation Brands       13
+            Stanley Black & Decker       13
+                    United Rentals       13
+                 Quest Diagnostics       12
+                   PPL Corporation       12
+                  Verisk Analytics       12
+                          Verisign       12
+           American Electric Power       11
+                          AutoZone       11
+               Rockwell Automation       11
+                Seagate Technology       11
+            Vertex Pharmaceuticals       11
+                          Domino's       10
+                            DaVita       10
+                           Hologic       10
+                    Kimberly-Clark       10
+               Insulet Corporation       10
+                      Vistra Corp.       10
+                          Assurant        9
+                      Crown Castle        9
+        Charles River Laboratories        9
+               Fifth Third Bancorp        9
+         Live Nation Entertainment        9
+                            Altria        9
+           Progressive Corporation        9
+                    Tractor Supply        9
+                      U.S. Bancorp        9
+                             Aflac        8
+                 Colgate-Palmolive        8
+                            Cintas        8
+                            Ecolab        8
+                            Garmin        8
+                    HCA Healthcare        8
+             Keysight Technologies        8
+                        S&P Global        8
+         Universal Health Services        8
+               Extra Space Storage        7
+                         J.B. Hunt        7
+    Norwegian Cruise Line Holdings        7
+              Agilent Technologies        6
+                            Airbnb        6
+         Arthur J. Gallagher & Co.        6
+               Akamai Technologies        6
+             Albemarle Corporation        6
+                      Air Products        6
+                        CMS Energy        6
+                   CSX Corporation        6
+                    Deckers Brands        6
+                  General Dynamics        6
+                   Global Payments        6
+             Hershey Company (The)        6
+                     Iron Mountain        6
+                 Molina Healthcare        6
+                  Norfolk Southern        6
+                  Sherwin-Williams        6
+                           Textron        6
+                            Zoetis        6
+                            Ametek        5
+                CenterPoint Energy        5
+                    ConocoPhillips        5
+                    Digital Realty        5
+                            Kenvue        5
+               Moody's Corporation        5
+                         MSCI Inc.        5
+              Willis Towers Watson        5
+                Arch Capital Group        4
+                            Clorox        4
+           Jack Henry & Associates        4
+                Motorola Solutions        4
+                        NRG Energy        4
+                Tyler Technologies        4
+                          Allstate        3
+                    Conagra Brands        3
+              Cincinnati Financial        3
+                   Dominion Energy        3
+                          Dow Inc.        3
+                       Duke Energy        3
+                           Entergy        3
+              Edwards Lifesciences        3
+                            Exelon        3
+              Hubbell Incorporated        3
+                Idexx Laboratories        3
+                       Kraft Heinz        3
+               McCormick & Company        3
+          Monolithic Power Systems        3
+                    Northern Trust        3
+       Philip Morris International        3
+        J.M. Smucker Company (The)        3
+                Trane Technologies        3
+              Take-Two Interactive        3
+                       Xcel Energy        3
+                     Zimmer Biomet        3
+                Franklin Resources        2
+                      Bunge Global        2
+                  Caterpillar Inc.        2
+                            Corpay        2
+                           Corteva        2
+                        DTE Energy        2
+                      Devon Energy        2
+                     EOG Resources        2
+                 Eversource Energy        2
+     Huntington Ingalls Industries        2
+                      Hormel Foods        2
+                  Keurig Dr Pepper        2
+              Lennox International        2
+                         Linde plc        2
+         Martin Marietta Materials        2
+                Marathon Petroleum        2
+                           Moderna        2
+                     Omnicom Group        2
+                          Prologis        2
+                           Pentair        2
+                       Phillips 66        2
+                   Quanta Services        2
+                            Steris        2
+                Skyworks Solutions        2
+                           Viatris        2
+                Waters Corporation        2
+                        Xylem Inc.        2
+            Archer Daniels Midland        1
+                            Ameren        1
+          Apollo Global Management        1
+                    Avery Dennison        1
+                          Carnival        1
+                 Dover Corporation        1
+                Darden Restaurants        1
+                            Evergy        1
+                     Expand Energy        1
+                    Ingersoll Rand        1
+            Mondelez International        1
+                    Mettler Toledo        1
+                   Parker Hannifin        1
+                    PPG Industries        1
+                        Bio-Techne        1
+                     Valero Energy        1
+                         Welltower        1
+              Builders FirstSource        0
+                   Church & Dwight        0
+               Consolidated Edison        0
+              Edison International        0
+                   EQT Corporation        0
+                    Erie Indemnity        0
+              Essex Property Trust        0
+                       FirstEnergy        0
+             Huntington Bancshares        0
+                      Henry Schein        0
+                    LyondellBasell        0
+                           Newmont        0
+                          NiSource        0
+                             Nucor        0
+               O’Reilly Automotive        0
+                    Otis Worldwide        0
+                            Sempra        0
+     Molson Coors Beverage Company        0
+             Teledyne Technologies        0
+                   Targa Resources        0
+                            Wabtec        0
+         W. R. Berkley Corporation        0
+                      Weyerhaeuser        0
+                      Wynn Resorts        0

@@ -17,13 +17,17 @@ if (!isLoginActive) {
 }
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const inArgIdx = process.argv.findIndex(arg => arg.endsWith('.txt') && !arg.startsWith('--'));
-const IN_FILE = process.argv[inArgIdx] && fs.existsSync(process.argv[inArgIdx])
-    ? path.resolve(process.argv[inArgIdx])
-    : path.resolve(__dirname, "../../data/nvidia_post_urls.txt");
+const args = process.argv.slice(2);
+const companyListArg = args.find(arg => arg.startsWith('--company-list='));
+const COMPANY_LIST_PATH = companyListArg ? path.resolve(companyListArg.split('=')[1]) : null;
 
-const outArgIdx = process.argv.findIndex((arg, idx) => idx > inArgIdx && !arg.startsWith('--'));
-const OUT_DIR = outArgIdx !== -1 && process.argv[outArgIdx]
+const inArgIdx = process.argv.findIndex((arg, idx) => idx >= 2 && !arg.startsWith('--') && (arg.endsWith('.txt') || arg.endsWith('.json') || arg.startsWith('http')));
+const IN_FILE = inArgIdx !== -1 && (fs.existsSync(process.argv[inArgIdx]) || process.argv[inArgIdx].startsWith('http'))
+    ? (process.argv[inArgIdx].startsWith('http') ? process.argv[inArgIdx] : path.resolve(process.argv[inArgIdx]))
+    : (COMPANY_LIST_PATH ? null : path.resolve(__dirname, "../../data/nvidia_post_urls.txt"));
+
+const outArgIdx = process.argv.findIndex((arg, idx) => idx > Math.max(1, inArgIdx) && !arg.startsWith('--'));
+const DEFAULT_OUT_DIR = outArgIdx !== -1 && process.argv[outArgIdx]
     ? path.resolve(process.argv[outArgIdx])
     : path.resolve(__dirname, "../../data/posts_optimized");
 const userArgIndex = process.argv.indexOf('--user');
@@ -282,8 +286,8 @@ async function downloadFile(url, dest) {
     });
 }
 
-async function downloadAllImages(data, postUrl, logger = console) {
-    const imagesDir = path.resolve(OUT_DIR, "images");
+async function downloadAllImages(data, postUrl, logger = console, outDirOverride = null) {
+    const imagesDir = path.resolve(outDirOverride || OUT_DIR, "images");
     if (!fs.existsSync(imagesDir)) fs.mkdirSync(imagesDir, { recursive: true });
 
     const postSlug = postUrl.split("/").pop();
@@ -404,15 +408,12 @@ async function extractPostData(page, url, logger = console, options = {}) {
     logger.log(`Processing (Optimized): ${url} at ${scrapeTime}`);
 
     // OPTIMIZATION: Check if already on the page (preserves Referer from organic scraper)
-    try {
-        if (page.url() !== url && page.url() !== url + "/") {
-            // Reduced timeout to 20s to detect redirects/failures faster
-            await page.goto(url, { waitUntil: "domcontentloaded", timeout: 20000, referer: "https://www.teamblind.com/" });
-        } else {
-            logger.log("  ℹ Page already at target URL (Skipping navigation)");
-        }
-    } catch (e) {
-        logger.log(`  ⚠️ Navigation warning: ${e.message}`);
+    if (page.url() !== url && page.url() !== url + "/") {
+        // Reduced timeout to 20s to detect redirects/failures faster
+        // We NO LONGER swallow this error. If navigation fails, we want the caller (startScraping) to know.
+        await page.goto(url, { waitUntil: "domcontentloaded", timeout: 20000, referer: "https://www.teamblind.com/" });
+    } else {
+        logger.log("  ℹ Page already at target URL (Skipping navigation)");
     }
 
     // Wait for potential client-side redirect (common for missing posts)
@@ -425,6 +426,13 @@ async function extractPostData(page, url, logger = console, options = {}) {
     if (currentUrl === "https://www.teamblind.com/" || currentUrl === "https://www.teamblind.com") {
         logger.log("  🛑 Redirected to home page (Post likely deleted/missing).");
         throw new Error("POST_NOT_FOUND_REDIRECT");
+    }
+
+    // NEW: Check for browser error pages (like "No internet")
+    const pageTitle = await page.title();
+    if (pageTitle === "No internet" || pageTitle.includes("not available") || pageTitle.includes("Problem loading page")) {
+        logger.log(`  🛑 Detected browser error page: "${pageTitle}"`);
+        throw new Error(`BROWSER_ERROR_PAGE: ${pageTitle}`);
     }
 
     // Check for "Oops" error page immediately after navigation
@@ -1433,35 +1441,9 @@ async function extractPostData(page, url, logger = console, options = {}) {
 }
 
 async function startScraping() {
-    let urls = [];
-
-    if (IN_FILE.startsWith("http")) {
-        urls = [IN_FILE];
-        console.log(`⚡ Starting OPTIMIZED single post extraction for: ${IN_FILE}`);
-    } else {
-        console.log(`⚡ Input file: ${IN_FILE}`);
-        console.log(`⚡ Output dir: ${OUT_DIR}`);
-        if (fs.existsSync(IN_FILE)) {
-            urls = fs.readFileSync(IN_FILE, "utf-8").split("\n").filter(u => u.trim());
-
-            if (process.argv.includes('--reverse')) {
-                console.log("🔄 Reverse mode enabled. Reversing URL list...");
-                urls.reverse();
-            }
-
-            console.log(`⚡ Starting OPTIMIZED batch extraction: ${urls.length} URLs found`);
-        } else {
-            console.error(`Input file not found: ${IN_FILE}`);
-            process.exit(1);
-        }
-    }
-
     const usePersistentContext = process.argv.includes('--persistent');
-    const useHeadless = false; // process.argv.includes('--headless'); // Deprecated: Headless mode is less reliable
-    if (process.argv.includes('--headless')) {
-        console.warn("⚠️  WARNING: --headless mode is deprecated and disabled for reliability. Running in headful mode.");
-    }
-    const useCaptureTopLevel = process.argv.includes('--capture-toplevel');
+    const useHeadless = false;
+    const useCaptureTopLevel = !process.argv.includes('--no-capture-toplevel');
     const useNewBrowser = process.argv.includes('--new-browser');
     const useVerbose = process.argv.includes('--verbose');
     const useLogin = process.argv.includes('--login');
@@ -1469,10 +1451,19 @@ async function startScraping() {
     const useLoginWait = process.argv.includes('--login-wait');
     const useAutoLogin = process.argv.includes('--auto-login');
     const useReverse = process.argv.includes('--reverse');
+    const usePrevRetry = process.argv.includes('--prev-retry');
+
+    let companies = [];
+    if (COMPANY_LIST_PATH && fs.existsSync(COMPANY_LIST_PATH)) {
+        console.log(`📋 Loading companies from ${COMPANY_LIST_PATH}...`);
+        companies = JSON.parse(fs.readFileSync(COMPANY_LIST_PATH, "utf-8"));
+    } else {
+        companies = [{ "Company Name": "Single", "Symbol": "SINGLE", "is_single": true }];
+    }
 
     if (useReverse) {
         console.log("🔄 Reverse mode active: Processing URLs from tail to head");
-        urls.reverse();
+        companies.reverse();
     }
 
     const proxyArgIndex = process.argv.indexOf('--proxy');
@@ -1566,140 +1557,186 @@ async function startScraping() {
         console.log("Skipping login as per configuration. Some content (polls, etc.) may be missing.");
     }
 
-    if (!fs.existsSync(OUT_DIR)) {
-        fs.mkdirSync(OUT_DIR, { recursive: true });
-    }
+    for (const company of companies) {
+        let urls = [];
+        let currentOutDir = DEFAULT_OUT_DIR;
+        let companyName = company["Company Name"];
 
-    const LOG_DIR = path.join(OUT_DIR, "logs");
-    if (!fs.existsSync(LOG_DIR)) {
-        fs.mkdirSync(LOG_DIR, { recursive: true });
-    }
-
-    const allData = [];
-    for (const url of urls) {
-        const identifier = url.split('/').pop() || `post_${Date.now()}`;
-        const filePath = `${OUT_DIR}/${identifier}.json`;
-
-        if (fs.existsSync(filePath)) {
-            console.log(`⏭️ Skipping ${url} - already exists`);
-            continue;
-        }
-
-        // In new-browser mode, launch a fresh browser for each URL
-        // Bypassed if useLogin, useManualLogin or useLoginWait is true to maintain authenticated session
-        if (useNewBrowser && !useLogin && !useManualLogin && !useLoginWait && urls.indexOf(url) > 0) {
-            console.log(`🔄 Launching new browser for: ${identifier}`);
-            if (browser) await browser.close().catch(() => { });
-            else await context.close().catch(() => { });
-            ({ browser, context, page } = await launchBrowserInstance());
-        }
-
-        let retryCount = 0;
-        const maxRetries = usePrevRetry ? 3 : 9;
-        const retryInterval = 10000; // Only used for granular
-        let success = false;
-
-        while (retryCount <= maxRetries && !success) {
-            try {
-                const startTime = Date.now();
-
-                // Initialize per-post logger for standalone run
-                const logFile = path.join(LOG_DIR, `${identifier}.log`);
-                const logger = {
-                    log: (...args) => {
-                        const message = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
-                        const timestamp = new Date().toISOString();
-                        const line = `[${timestamp}] ${message}\n`;
-                        console.log(message); // Still log to stdout
-                        try {
-                            fs.appendFileSync(logFile, line);
-                        } catch (e) { /* Ignore log write errors */ }
-                    },
-                    error: (...args) => {
-                        const message = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
-                        const timestamp = new Date().toISOString();
-                        const line = `[${timestamp}] ERROR: ${message}\n`;
-                        console.error(message);
-                        try {
-                            fs.appendFileSync(logFile, line);
-                        } catch (e) { /* Ignore log write errors */ }
-                    }
-                };
-
-                const options = {
-                    captureTopLevel: useCaptureTopLevel,
-                    verbose: useVerbose
-                };
-
-                const data = await extractPostData(page, url, logger, options);
-                const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-                data.time_elapsed = elapsed;
-
-                // identifier and filePath are already defined in the outer scope
-
-                await downloadAllImages(data, url, logger);
-
-                fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
-                console.log(`✅ Saved: ${filePath} (${elapsed}s, ${data.replies.length} top-level comments)`);
-
-                allData.push(data);
-                success = true;
-            } catch (e) {
-                if (e.message === "RATE_LIMITED" || e.message.includes("Timeout")) {
-                    retryCount++;
-                    const accumulatedWait = (retryCount * retryInterval) / 1000;
-
-                    if (retryCount > maxRetries) {
-                        console.error(`❌ Permanent failure for ${url} after 90s. Saving to failure list.`);
-                        const failedFile = path.join(OUT_DIR, "failed_post_urls.txt");
-                        fs.appendFileSync(failedFile, `${url}\n`);
-                        break;
-                    }
-
-                    console.log(`⚠️ ${e.message === "RATE_LIMITED" ? "Rate limited" : "Timeout"}. Retry ${retryCount}/${maxRetries} (${accumulatedWait}s/90s)...`);
-
-                    if (e.message === "RATE_LIMITED") {
-                        console.log(`   🧊 Rate limit detected. Running 30s deep breath cooler...`);
-                        await page.waitForTimeout(30000);
-                        // If rate limited, try to "unstick" by going to home page
-                        await page.goto("https://www.teamblind.com/", { waitUntil: "domcontentloaded" }).catch(() => { });
-                    }
-
-                    await page.waitForTimeout(retryInterval);
-                } else if (e.message === "POST_NOT_FOUND_REDIRECT") {
-                    console.error(`❌ Post not found (redirected to home): ${url}`);
-                    const missingFile = path.join(OUT_DIR, "missing_posts.txt");
-                    // Ensure newline is added
-                    fs.appendFileSync(missingFile, `${url}\n`);
-                    break; // Non-retryable
+        if (company.is_single) {
+            if (IN_FILE && IN_FILE.startsWith("http")) {
+                urls = [IN_FILE];
+                console.log(`⚡ Starting OPTIMIZED single post extraction for: ${IN_FILE}`);
+            } else if (IN_FILE && fs.existsSync(IN_FILE)) {
+                if (IN_FILE.endsWith('.json')) {
+                    const data = JSON.parse(fs.readFileSync(IN_FILE, "utf-8"));
+                    urls = data.map(item => item.url || item.PostURL || item).filter(u => u && typeof u === 'string');
                 } else {
-                    console.error(`❌ Error scraping ${url}:`, e.message);
-                    break; // Non-retryable error
+                    urls = fs.readFileSync(IN_FILE, "utf-8").split("\n").filter(u => u.trim());
                 }
+            }
+        } else {
+            // Batch company mode: compute IN_FILE and OUT_DIR
+            const safeName = companyName.toLowerCase().replace(/[^a-z0-9]/g, "_").replace(/_+/g, "_");
+            const companyBaseDir = path.resolve(__dirname, "../../data/company_post_urls", safeName);
+            const batchInFile = path.join(companyBaseDir, `${safeName}_recent.json`);
+            currentOutDir = path.resolve(__dirname, "../../data/company_posts", safeName);
+
+            console.log(`\n🏢 Processing Company: ${companyName} (${company.Symbol})`);
+            if (fs.existsSync(batchInFile)) {
+                const data = JSON.parse(fs.readFileSync(batchInFile, "utf-8"));
+                urls = data.map(item => item.url).filter(u => u);
+                console.log(`   🔗 Loaded ${urls.length} URLs from ${path.basename(batchInFile)}`);
+            } else {
+                console.warn(`   ⚠️ URL file not found: ${batchInFile}. Skipping.`);
+                continue;
             }
         }
 
-        if (!success) {
-            console.error(`❌ Permanent failure for ${url} after ${maxRetries} retries.`);
+        if (useReverse) {
+            urls.reverse();
         }
 
-        // Adaptive delay between posts with --delay and --jitter support
-        const delayArgIdx = process.argv.indexOf('--delay');
-        const jitterArgIdx = process.argv.indexOf('--jitter');
+        if (!fs.existsSync(currentOutDir)) {
+            fs.mkdirSync(currentOutDir, { recursive: true });
+        }
 
-        const baseDelayMs = delayArgIdx !== -1 ? parseInt(process.argv[delayArgIdx + 1], 10) : 8000;
-        const jitterMultiplier = jitterArgIdx !== -1 ? parseFloat(process.argv[jitterArgIdx + 1]) : 0.75;
+        const LOG_DIR = path.join(currentOutDir, "logs");
+        if (!fs.existsSync(LOG_DIR)) {
+            fs.mkdirSync(LOG_DIR, { recursive: true });
+        }
 
-        const delay = baseDelayMs + Math.floor(Math.random() * (baseDelayMs * jitterMultiplier));
-        console.log(`⏳ Cooldown: Waiting ${Math.round(delay / 1000)}s before next post to avoid rate limits...`);
-        await page.waitForTimeout(delay);
-    }
+        const allData = [];
+        for (const url of urls) {
+            const identifier = url.split('/').pop() || `post_${Date.now()}`;
+            const filePath = `${currentOutDir}/${identifier}.json`;
 
-    if (browser) {
-        await browser.close();
-    } else {
-        await context.close();
-    }
+            if (fs.existsSync(filePath)) {
+                console.log(`⏭️ Skipping ${url} - already exists`);
+                continue;
+            }
+
+            // In new-browser mode, launch a fresh browser for each URL
+            // Bypassed if useLogin, useManualLogin or useLoginWait is true to maintain authenticated session
+            if (useNewBrowser && !useLogin && !useManualLogin && !useLoginWait && urls.indexOf(url) > 0) {
+                console.log(`🔄 Launching new browser for: ${identifier}`);
+                if (browser) await browser.close().catch(() => { });
+                else await context.close().catch(() => { });
+                ({ browser, context, page } = await launchBrowserInstance());
+            }
+
+            let retryCount = 0;
+            const maxRetries = usePrevRetry ? 3 : 9;
+            const retryInterval = 10000; // Only used for granular
+            let success = false;
+
+            while (retryCount <= maxRetries && !success) {
+                try {
+                    const startTime = Date.now();
+
+                    // Initialize per-post logger for standalone run
+                    const logFile = path.join(LOG_DIR, `${identifier}.log`);
+                    const logger = {
+                        log: (...args) => {
+                            const message = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
+                            const timestamp = new Date().toISOString();
+                            const line = `[${timestamp}] ${message}\n`;
+                            console.log(message); // Still log to stdout
+                            try {
+                                fs.appendFileSync(logFile, line);
+                            } catch (e) { /* Ignore log write errors */ }
+                        },
+                        error: (...args) => {
+                            const message = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
+                            const timestamp = new Date().toISOString();
+                            const line = `[${timestamp}] ERROR: ${message}\n`;
+                            console.error(message);
+                            try {
+                                fs.appendFileSync(logFile, line);
+                            } catch (e) { /* Ignore log write errors */ }
+                        }
+                    };
+
+                    const options = {
+                        captureTopLevel: useCaptureTopLevel,
+                        verbose: useVerbose
+                    };
+
+                    const data = await extractPostData(page, url, logger, options);
+                    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+                    data.time_elapsed = elapsed;
+
+                    // identifier and filePath are already defined in the outer scope
+
+                    // Pass the currentOutDir to downloadAllImages
+                    await downloadAllImages(data, url, logger, currentOutDir);
+
+                    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+                    console.log(`✅ Saved: ${filePath} (${elapsed}s, ${data.replies.length} top-level comments)`);
+
+                    allData.push(data);
+                    success = true;
+                } catch (e) {
+                    const errorMessage = e.message || String(e);
+                    const isRetryable = errorMessage === "RATE_LIMITED" ||
+                        errorMessage.includes("Timeout") ||
+                        errorMessage.includes("BROWSER_ERROR_PAGE") ||
+                        errorMessage.includes("net::ERR_");
+
+                    if (isRetryable) {
+                        retryCount++;
+                        const accumulatedWait = (retryCount * retryInterval) / 1000;
+
+                        if (retryCount > maxRetries) {
+                            console.error(`❌ Permanent failure for ${url} after ${maxRetries} retries. Saving to failure list.`);
+                            const failedFile = path.join(currentOutDir, "failed_post_urls.txt");
+                            fs.appendFileSync(failedFile, `${url}\n`);
+                            break;
+                        }
+
+                        console.log(`⚠️ ${errorMessage.includes("RATE_LIMITED") ? "Rate limited" : "Network/Browser error"}. Retry ${retryCount}/${maxRetries} (${accumulatedWait}s/90s)...`);
+                        if (errorMessage.includes("net::ERR_")) {
+                            console.log(`   ℹ Detail: ${errorMessage}`);
+                        }
+
+                        if (errorMessage === "RATE_LIMITED") {
+                            console.log(`   🧊 Rate limit detected. Running 30s deep breath cooler...`);
+                            await page.waitForTimeout(30000);
+                            // If rate limited, try to "unstick" by going to home page
+                            await page.goto("https://www.teamblind.com/", { waitUntil: "domcontentloaded" }).catch(() => { });
+                        }
+
+                        await page.waitForTimeout(retryInterval);
+                    } else if (errorMessage === "POST_NOT_FOUND_REDIRECT") {
+                        console.error(`❌ Post not found (redirected to home): ${url}`);
+                        const missingFile = path.join(currentOutDir, "missing_posts.txt");
+                        fs.appendFileSync(missingFile, `${url}\n`);
+                        break; // Non-retryable
+                    } else {
+                        console.error(`❌ Error scraping ${url}:`, errorMessage);
+                        break; // Non-retryable error
+                    }
+                }
+            }
+
+            if (!success) {
+                console.error(`❌ Permanent failure for ${url} after ${maxRetries} retries.`);
+            }
+
+            // Adaptive delay between posts with --delay and --jitter support
+            const delayArgIdx = process.argv.indexOf('--delay');
+            const jitterArgIdx = process.argv.indexOf('--jitter');
+
+            const baseDelayMs = delayArgIdx !== -1 ? parseInt(process.argv[delayArgIdx + 1], 10) : 8000;
+            const jitterMultiplier = jitterArgIdx !== -1 ? parseFloat(process.argv[jitterArgIdx + 1]) : 0.75;
+
+            const delay = baseDelayMs + Math.floor(Math.random() * (baseDelayMs * jitterMultiplier));
+            console.log(`⏳ Cooldown: Waiting ${Math.round(delay / 1000)}s before next post to avoid rate limits...`);
+            await page.waitForTimeout(delay);
+        } // End URL loop
+    } // End Company loop
+
+    if (browser) await browser.close();
+    else if (context) await context.close();
     console.log("✅ Scraping completed.");
 }
 

@@ -1,2 +1,0 @@
-[...document.querySelectorAll('[id^="comment-group-"]')]
-  .map(el => el.id)

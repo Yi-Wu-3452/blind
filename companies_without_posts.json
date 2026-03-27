@@ -1,0 +1,90 @@
+[
+  {
+    "name": "Builders FirstSource",
+    "dirName": "builders_firstsource"
+  },
+  {
+    "name": "Church & Dwight",
+    "dirName": "church_dwight"
+  },
+  {
+    "name": "Consolidated Edison",
+    "dirName": "consolidated_edison"
+  },
+  {
+    "name": "Edison International",
+    "dirName": "edison_international"
+  },
+  {
+    "name": "EQT Corporation",
+    "dirName": "eqt_corporation"
+  },
+  {
+    "name": "Erie Indemnity",
+    "dirName": "erie_indemnity"
+  },
+  {
+    "name": "Essex Property Trust",
+    "dirName": "essex_property_trust"
+  },
+  {
+    "name": "FirstEnergy",
+    "dirName": "firstenergy"
+  },
+  {
+    "name": "Huntington Bancshares",
+    "dirName": "huntington_bancshares"
+  },
+  {
+    "name": "Henry Schein",
+    "dirName": "henry_schein"
+  },
+  {
+    "name": "Newmont",
+    "dirName": "newmont"
+  },
+  {
+    "name": "NiSource",
+    "dirName": "nisource"
+  },
+  {
+    "name": "Nucor",
+    "dirName": "nucor"
+  },
+  {
+    "name": "O’Reilly Automotive",
+    "dirName": "o_reilly_automotive"
+  },
+  {
+    "name": "Otis Worldwide",
+    "dirName": "otis_worldwide"
+  },
+  {
+    "name": "Sempra",
+    "dirName": "sempra"
+  },
+  {
+    "name": "Molson Coors Beverage Company",
+    "dirName": "molson_coors_beverage_company"
+  },
+  {
+    "name": "Teledyne Technologies",
+    "dirName": "teledyne_technologies"
+  },
+  {
+    "name": "Targa Resources",
+    "dirName": "targa_resources"
+  },
+  {
+    "name": "Wabtec",
+    "dirName": "wabtec"
+  },
+  {
+    "name": "W. R. Berkley Corporation",
+    "dirName": "w_r_berkley_corporation"
+  },
+  {
+    "name": "Weyerhaeuser",
+    "dirName": "weyerhaeuser"
+  }
+]

@@ -1,0 +1,74 @@
+[
+    {
+        "Symbol": "CRM",
+        "Company Name": "Salesforce",
+        "Post URL": "https://www.teamblind.com/company/Salesforce/posts",
+        "# Posts": 3659
+    },
+    {
+        "Symbol": "INTU",
+        "Company Name": "Intuit",
+        "Post URL": "https://www.teamblind.com/company/Intuit/posts",
+        "# Posts": 1713
+    },
+    {
+        "Symbol": "ABT",
+        "Company Name": "Abbott Laboratories",
+        "Post URL": "https://www.teamblind.com/company/Abbott/posts",
+        "# Posts": 1007
+    },
+    {
+        "Symbol": "XYZ",
+        "Company Name": "Block, Inc.",
+        "Post URL": "https://www.teamblind.com/company/Block/posts",
+        "# Posts": 8818
+    },
+    {
+        "Symbol": "CSCO",
+        "Company Name": "Cisco",
+        "Post URL": "https://www.teamblind.com/company/Cisco/posts",
+        "# Posts": 8312
+    },
+    {
+        "Symbol": "DDOG",
+        "Company Name": "Datadog",
+        "Post URL": "https://www.teamblind.com/company/Datadog/posts",
+        "# Posts": 7075
+    },
+    {
+        "Symbol": "QCOM",
+        "Company Name": "Qualcomm",
+        "Post URL": "https://www.teamblind.com/company/Qualcomm/posts",
+        "# Posts": 6181
+    },
+    {
+        "Symbol": "PLTR",
+        "Company Name": "Palantir Technologies",
+        "Post URL": "https://www.teamblind.com/company/Palantir/posts",
+        "# Posts": 5790
+    },
+    {
+        "Symbol": "AMD",
+        "Company Name": "Advanced Micro Devices",
+        "Post URL": "https://www.teamblind.com/company/AMD/posts",
+        "# Posts": 5523
+    },
+    {
+        "Symbol": "COF",
+        "Company Name": "Capital One",
+        "Post URL": "https://www.teamblind.com/company/Capital-One/posts",
+        "# Posts": 4751
+    },
+    {
+        "Symbol": "DELL",
+        "Company Name": "Dell Technologies",
+        "Post URL": "https://www.teamblind.com/company/Dell/posts",
+        "# Posts": 2999
+    },
+    {
+        "Symbol": "AVGO",
+        "Company Name": "Broadcom",
+        "Post URL": "https://www.teamblind.com/company/Broadcom/posts",
+        "# Posts": 2920
+    }
+]

@@ -2,20 +2,29 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { chromium } from "playwright-extra";
-import { collectUrlsForCompany } from "./collect_company_urls_robust.mjs";
+import { collectUrlsForCompany, login } from "./collect_company_urls_robust.mjs";
+import { setActiveLogFile } from "./logger.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(__dirname, "../../");
 const DATA_DIR = path.resolve(ROOT_DIR, "data");
 const BASE_OUT_DIR = path.resolve(DATA_DIR, "company_post_urls");
-const COMPANY_LIST_PATH = path.resolve(ROOT_DIR, "company_list.json");
-
 // Parse CLI args
 const args = process.argv.slice(2);
-const limit = parseInt(args.find(arg => arg.startsWith("--limit="))?.split("=")[1] || "0");
+
+const companyListArg = args.find(arg => arg.startsWith("--company-list=") || arg.startsWith("--company_list="))?.split("=")[1];
+const COMPANY_LIST_PATH = companyListArg ? path.resolve(ROOT_DIR, companyListArg) : path.resolve(ROOT_DIR, "company_list.json");
+
+const limit = parseInt(args.find(arg => arg.startsWith("--limit="))?.split("=")[1] || "1000");
+const reverse = args.includes("--reverse");
+const force = args.includes("--force");
+
+const noRecent = args.includes("--no-recent") || args.includes("--no_recent");
+const useRobustScroll = args.includes("--robust-scroll") || args.includes("--robust_scroll");
+const scrollInterval = parseInt(args.find(arg => arg.startsWith("--scroll-interval=") || arg.startsWith("--scroll_interval="))?.split("=")[1] || "2000");
+const scrollLimit = parseInt(args.find(arg => arg.startsWith("--scroll-limit=") || arg.startsWith("--scroll_limit="))?.split("=")[1] || "20");
 const startFrom = args.find(arg => arg.startsWith("--start-from="))?.split("=")[1];
-const force = process.argv.includes("--force");
-const reverse = process.argv.includes("--reverse");
+const account = args.find(arg => arg.startsWith("--account="))?.split("=")[1];
 
 const proxyArgIndex = process.argv.indexOf('--proxy');
 let proxyConfig = undefined;
@@ -71,6 +80,9 @@ async function runBatch() {
     });
     const page = await context.newPage();
 
+    console.log(`🔑 Logging in with account "${account || 'default'}" before starting batch processing...`);
+    await login(page, { manual: false, account });
+
     let processedCount = 0;
     let skipCount = 0;
     let foundStart = !startFrom;
@@ -116,10 +128,11 @@ async function runBatch() {
         const postCount = parseInt(company["# Posts"] || "0");
         const isLarge = postCount > 10000;
 
-        const runs = [
-            // Always run the recent sort
-            { sort: "recent", suffix: "_recent", stateKey: "recent" }
-        ];
+        const runs = [];
+        if (!noRecent) {
+            runs.push({ sort: "recent", suffix: "_recent", stateKey: "recent" });
+        }
+
         if (isLarge) {
             runs.push({ sort: null, suffix: "", stateKey: "all" });
         }
@@ -136,6 +149,10 @@ async function runBatch() {
             }
 
             console.log(`\n▶️  [${processedCount + 1}/${companies.length}] Processing: ${companyName} (${symbol}) - Sort: ${run.sort || "default"}`);
+            // Set active log file for this specific run (e.g., recent vs all)
+            const logFileName = `log${run.suffix}.txt`;
+            setActiveLogFile(path.join(companyDir, logFileName));
+
             console.log(`   🔗 URL: ${postUrl}`);
             console.log(`   📂 Out: ${path.join("company_post_urls", safeName, path.basename(outFile))}`);
 
@@ -150,7 +167,10 @@ async function runBatch() {
                     targetUrl,
                     outFile,
                     scrollCount: 3,
-                    useSimpleRetry: false
+                    useSimpleRetry: false,
+                    useRobustScroll,
+                    scrollInterval,
+                    scrollLimit
                 });
 
                 scrapeState[run.stateKey] = true;

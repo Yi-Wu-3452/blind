@@ -1,0 +1,116 @@
+[
+  {
+    "Symbol": "AMZN",
+    "Company Name": "Amazon",
+    "Post URL": "https://www.teamblind.com/company/Amazon/posts",
+    "# Posts": 153000
+  },
+  {
+    "Symbol": "GOOGL",
+    "Company Name": "Alphabet Inc.\u00a0(Class A)",
+    "Post URL": "https://www.teamblind.com/company/Google/posts",
+    "# Posts": 147000
+  },
+  {
+    "Symbol": "META",
+    "Company Name": "Meta Platforms",
+    "Post URL": "https://www.teamblind.com/company/Meta/posts",
+    "# Posts": 131000
+  },
+  {
+    "Symbol": "MSFT",
+    "Company Name": "Microsoft",
+    "Post URL": "https://www.teamblind.com/company/Microsoft/posts",
+    "# Posts": 86000
+  },
+  {
+    "Symbol": "AAPL",
+    "Company Name": "Apple Inc.",
+    "Post URL": "https://www.teamblind.com/company/Apple/posts",
+    "# Posts": 57000
+  },
+  {
+    "Symbol": "V",
+    "Company Name": "Visa Inc.",
+    "Post URL": "https://www.teamblind.com/company/Visa/posts",
+    "# Posts": 44000
+  },
+  {
+    "Symbol": "UBER",
+    "Company Name": "Uber",
+    "Post URL": "https://www.teamblind.com/company/Uber/posts",
+    "# Posts": 34000
+  },
+  {
+    "Symbol": "MTCH",
+    "Company Name": "Match Group",
+    "Post URL": "https://www.teamblind.com/company/Match/posts",
+    "# Posts": 26000
+  },
+  {
+    "Symbol": "NFLX",
+    "Company Name": "Netflix",
+    "Post URL": "https://www.teamblind.com/company/Netflix/posts",
+    "# Posts": 24000
+  },
+  {
+    "Symbol": "TGT",
+    "Company Name": "Target Corporation",
+    "Post URL": "https://www.teamblind.com/company/Target/posts",
+    "# Posts": 21000
+  },
+  {
+    "Symbol": "NVDA",
+    "Company Name": "Nvidia",
+    "Post URL": "https://www.teamblind.com/company/NVIDIA/posts",
+    "# Posts": 17000
+  },
+  {
+    "Symbol": "TSLA",
+    "Company Name": "Tesla, Inc.",
+    "Post URL": "https://www.teamblind.com/company/Tesla/posts",
+    "# Posts": 17000
+  },
+  {
+    "Symbol": "ORCL",
+    "Company Name": "Oracle Corporation",
+    "Post URL": "https://www.teamblind.com/company/Oracle/posts",
+    "# Posts": 16000
+  },
+  {
+    "Symbol": "ADBE",
+    "Company Name": "Adobe Inc.",
+    "Post URL": "https://www.teamblind.com/company/Adobe/posts",
+    "# Posts": 14000
+  },
+  {
+    "Symbol": "COIN",
+    "Company Name": "Coinbase",
+    "Post URL": "https://www.teamblind.com/company/Coinbase/posts",
+    "# Posts": 13000
+  },
+  {
+    "Symbol": "DASH",
+    "Company Name": "DoorDash",
+    "Post URL": "https://www.teamblind.com/company/DoorDash/posts",
+    "# Posts": 13000
+  },
+  {
+    "Symbol": "HOOD",
+    "Company Name": "Robinhood Markets",
+    "Post URL": "https://www.teamblind.com/company/Robinhood/posts",
+    "# Posts": 12000
+  },
+  {
+    "Symbol": "PYPL",
+    "Company Name": "PayPal",
+    "Post URL": "https://www.teamblind.com/company/PayPal/posts",
+    "# Posts": 12000
+  },
+  {
+    "Symbol": "WMT",
+    "Company Name": "Walmart",
+    "Post URL": "https://www.teamblind.com/company/Walmart/posts",
+    "# Posts": 12000
+  }
+]
