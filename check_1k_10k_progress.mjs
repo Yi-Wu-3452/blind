@@ -21,14 +21,19 @@ for (const company of companies) {
     const companyUrlDir = path.join(urlDir, safeName);
     const companyPostDir = path.join(dataDir, safeName);
     const recentJsonPath = path.join(companyUrlDir, `${safeName}_recent.json`);
+    const topJsonPath = path.join(companyUrlDir, `${safeName}_top.json`);
 
     let totalUrls = 0;
-    if (fs.existsSync(recentJsonPath)) {
-        try {
-            const data = JSON.parse(fs.readFileSync(recentJsonPath, 'utf8'));
-            totalUrls = data.length;
-        } catch (e) { }
+    const pathsToCheck = [recentJsonPath, topJsonPath];
+    for (const p of pathsToCheck) {
+        if (fs.existsSync(p)) {
+            try {
+                const data = JSON.parse(fs.readFileSync(p, 'utf8'));
+                totalUrls = Math.max(totalUrls, data.length);
+            } catch (e) { }
+        }
     }
+
 
     let doneCount = 0;
     if (fs.existsSync(companyPostDir)) {
@@ -51,7 +56,7 @@ results.forEach(r => {
     console.log(`| ${r.name} | ${r.total} | ${r.done} | ${r.percent} |`);
 });
 
-const fullyDone = results.filter(r => r.total > 0 && r.done >= r.total).length;
+const fullyDone = results.filter(r => r.total > 0 && (r.done / r.total) >= 0.95).length;
 const started = results.filter(r => r.done > 0).length;
 
 console.log(`\nSummary: ${fullyDone}/${companies.length} companies fully done. ${started} companies started.`);

@@ -12,3 +12,12 @@
 # caffeinate -d node scripts/core/extract_post_details_v2.mjs --company-list=company_list_1000_to_10K.json --delay=3000 --auto-login --account 2 --proxy socks5://127.0.0.1:18080 --reverse
 
 # node scripts/core/batch_collect_mega_company_tags.mjs
+
+node scripts/core/collect_company_urls_robust.mjs \
+  --company=Broadcom \
+  --sort=top \
+  --out=data/company_post_urls/broadcom/broadcom_top.json \
+  --login \
+  --account 3 \
+  --robust-scroll \
+  --scroll-limit=200

@@ -164,8 +164,25 @@ export async function login(page, options = {}) {
         console.log("🚀 Starting Organic Auto-Login sequence...");
 
         console.log("   🔑 Navigating to sign-in page...");
-        await page.goto("https://www.teamblind.com/sign-in", { waitUntil: "networkidle" });
-        await sleep(2000 + Math.random() * 2000);
+        let loginPageSuccess = false;
+        let loginPageRetries = 0;
+        while (!loginPageSuccess && loginPageRetries < 5) {
+            await page.goto("https://www.teamblind.com/sign-in", { waitUntil: "networkidle" });
+            await sleep(2000 + Math.random() * 2000);
+
+            const isErrorPage = await page.evaluate(() => {
+                const bodyText = document.body.innerText;
+                return bodyText.includes("Oops! Something went wrong");
+            });
+
+            if (isErrorPage) {
+                loginPageRetries++;
+                console.log(`   🔄 Got a temporary ERROR_PAGE on sign-in. Waiting 30 seconds and then refreshing (Retry ${loginPageRetries}/5)...`);
+                await page.waitForTimeout(30000);
+            } else {
+                loginPageSuccess = true;
+            }
+        }
 
         // Check if already logged in
         const isLoggedIn = await page.evaluate(() => {
@@ -261,22 +278,51 @@ export async function login(page, options = {}) {
 
 async function checkRateLimit(page) {
     try {
-        const errorText = await page.evaluate(() => {
+        const result = await page.evaluate(() => {
             const bodyText = document.body.innerText;
-            if (bodyText.includes("Oops! Something went wrong") && bodyText.includes("blindapp@teamblind.com")) {
-                return true;
-            }
-            return false;
+            const isErrorPage = bodyText.includes("Oops! Something went wrong") && bodyText.includes("blindapp@teamblind.com");
+            const isReadOnly = bodyText.includes("read-only mode") || bodyText.includes("Read-only mode");
+            const hasNoFeed = !document.querySelector('article');
+            const isAccessDenied = bodyText.includes("Access Denied") || bodyText.includes("403 Forbidden");
+
+            if (isErrorPage) return { type: 'ERROR_PAGE' };
+            if (isReadOnly) return { type: 'READ_ONLY' };
+            if (isAccessDenied) return { type: 'ACCESS_DENIED' };
+            // If no articles are found and the page seems small/empty, it's likely a hidden block
+            if (hasNoFeed && bodyText.length < 3000) return { type: 'EMPTY_FEED_HIDDEN_BLOCK' };
+            return null;
         });
 
-        if (errorText) {
-            console.log("   🛑 Detected Blind Error Page (Rate Limit?).");
-            return true;
+        if (result) {
+            console.log(`   🛑 Detected Restriction: ${result.type}`);
+            return result;
         }
     } catch (e) {
         // Ignore errors during check
     }
-    return false;
+    return null;
+}
+
+/**
+ * Perform randomized mouse movements to mimic human behavior
+ */
+async function addMouseJitter(page) {
+    try {
+        const viewport = page.viewportSize() || { width: 1280, height: 800 };
+        const x = Math.floor(Math.random() * viewport.width);
+        const y = Math.floor(Math.random() * viewport.height);
+
+        // Randomly move mouse to 1-3 positions
+        const moveCount = 1 + Math.floor(Math.random() * 2);
+        for (let i = 0; i < moveCount; i++) {
+            const tx = Math.floor(Math.random() * viewport.width);
+            const ty = Math.floor(Math.random() * viewport.height);
+            await page.mouse.move(tx, ty, { steps: 10 + Math.floor(Math.random() * 10) });
+            await sleep(100 + Math.random() * 200);
+        }
+    } catch (e) {
+        // Safe to ignore
+    }
 }
 
 /**
@@ -291,14 +337,17 @@ async function robustScroll(page, options = {}) {
     let consecutiveSame = 0;
 
     for (let i = 1; i <= limit; i++) {
-        // Wiggle to trigger lazy loaders
+        // Wiggle to trigger lazy loaders and add jitter
         await page.evaluate(() => {
             window.scrollBy(0, -100);
+        });
+        await addMouseJitter(page);
+        await page.evaluate(() => {
             window.scrollTo(0, document.body.scrollHeight);
         });
 
         // Wait for the interval + dynamic jitter
-        const jitter = Math.random() * 500;
+        const jitter = Math.random() * 1000;
         await page.waitForTimeout(interval + jitter);
 
         const state = await page.evaluate((sel) => {
@@ -392,35 +441,58 @@ export async function collectUrlsForCompany(page, options = {}) {
         let retryCount = 0;
         const maxRetries = useSimpleRetry ? 1 : 9;
         const retryInterval = 20000 + Math.random() * 20000;
+        let blockDetected = null;
 
         while (retryCount <= maxRetries && !success) {
             try {
                 await page.goto(pageUrl, { waitUntil: "domcontentloaded", timeout: 45000 });
-                const isRateLimited = await checkRateLimit(page);
-                if (isRateLimited) {
-                    throw new Error("RATE_LIMITED");
+                blockDetected = await checkRateLimit(page);
+                if (blockDetected) {
+                    throw new Error(`BLOCKED: ${blockDetected.type}`);
                 }
                 success = true;
             } catch (e) {
-                retryCount++;
-                if (retryCount > maxRetries) {
-                    console.error(`❌ Permanent failure for page ${currentPage} after ${maxRetries} retries: ${e.message}`);
-                    const screenshotPath = path.resolve(outDir, `error_page_${currentPage}_permanent.png`);
-                    await page.screenshot({ path: screenshotPath }).catch(() => { });
-                    break;
-                }
+                const errorMessage = e.message || String(e);
+                const isRetryable = errorMessage.includes("RATE_LIMITED") ||
+                    errorMessage.includes("Timeout") ||
+                    errorMessage.includes("ERROR_PAGE") ||
+                    errorMessage.includes("READ_ONLY") ||
+                    errorMessage.includes("net::ERR_") ||
+                    errorMessage.includes("EMPTY_FEED_HIDDEN_BLOCK");
 
-                console.log(`⚠️ ${e.message.includes("RATE_LIMITED") ? "Rate limited" : "Timeout"}. Retry ${retryCount}/${maxRetries} for page ${currentPage}...`);
-                if (e.message.includes("RATE_LIMITED")) {
-                    await page.goto("https://www.teamblind.com/", { waitUntil: "domcontentloaded" }).catch(() => { });
+                if (isRetryable) {
+                    retryCount++;
+                    const accumulatedWait = (retryCount * retryInterval) / 1000;
+
+                    if (retryCount > maxRetries) {
+                        console.error(`❌ Permanent failure for page ${currentPage} after ${maxRetries} retries: ${errorMessage}`);
+                        const screenshotPath = path.resolve(outDir, `error_page_${currentPage}_permanent.png`);
+                        await page.screenshot({ path: screenshotPath }).catch(() => { });
+                        return { status: 'FAILED', reason: errorMessage, lastPage: currentPage };
+                    }
+
+                    console.log(`⚠️ ${errorMessage.includes("RATE_LIMITED") ? "Rate limited" : "Temporary block/error"}. Retry ${retryCount}/${maxRetries} for page ${currentPage} (${accumulatedWait}s/90s)...`);
+
+                    if (errorMessage.includes("RATE_LIMITED") || errorMessage.includes("READ_ONLY") || errorMessage.includes("EMPTY_FEED_HIDDEN_BLOCK") || errorMessage.includes("ERROR_PAGE")) {
+                        console.log(`   🧊 Rate limit/block detected. Running 30s deep breath cooler...`);
+                        await page.waitForTimeout(30000);
+                        await page.goto("https://www.teamblind.com/", { waitUntil: "domcontentloaded" }).catch(() => { });
+                    }
+
+                    await page.waitForTimeout(retryInterval);
+                } else if (errorMessage.startsWith("BLOCKED:")) {
+                    console.log(`⚠️ Hard block detected on page ${currentPage}: ${blockDetected ? blockDetected.type : errorMessage}`);
+                    return { status: 'BLOCKED', reason: blockDetected ? blockDetected.type : errorMessage, lastPage: currentPage };
+                } else {
+                    console.error(`❌ Error scraping page ${currentPage}:`, errorMessage);
+                    return { status: 'FAILED', reason: errorMessage, lastPage: currentPage };
                 }
-                await page.waitForTimeout(retryInterval);
             }
         }
 
         if (!success) {
             console.log(`Stopping due to permanent failure on page ${currentPage}.`);
-            break;
+            return { status: 'FAILED', reason: 'PERMANENT_RETRY_FAILURE', lastPage: currentPage };
         }
 
         if (useRobustScroll) {
@@ -446,6 +518,7 @@ export async function collectUrlsForCompany(page, options = {}) {
             const isRateLimited = await checkRateLimit(page);
             if (isRateLimited) {
                 console.log("   ⚠️ Rate limited detected during selector wait.");
+                return { status: 'BLOCKED', reason: isRateLimited.type, lastPage: currentPage };
             } else {
                 console.log("   ⚠️ Timeout waiting for post links (20s). Retrying reload...");
             }
@@ -459,6 +532,7 @@ export async function collectUrlsForCompany(page, options = {}) {
                 const screenshotPath = path.resolve(outDir, `error_page_${currentPage}_content.png`);
                 await page.screenshot({ path: screenshotPath }).catch(() => { });
                 console.log(`      Saved screenshot to ${screenshotPath}`);
+                return { status: 'FAILED', reason: 'NO_LINKS_AFTER_RELOAD', lastPage: currentPage };
             }
         }
 
@@ -467,8 +541,13 @@ export async function collectUrlsForCompany(page, options = {}) {
         });
 
         if (urls.length === 0) {
+            const finalBlockCheck = await checkRateLimit(page);
+            if (finalBlockCheck) {
+                console.log(`   🚨 Zero links found AND block detected: ${finalBlockCheck.type}`);
+                return { status: 'BLOCKED', reason: finalBlockCheck.type, lastPage: currentPage };
+            }
             console.log("No post links found on this page. Stopping.");
-            break;
+            return { status: 'FINISHED', reason: 'EMPTY_PAGE', lastPage: currentPage };
         }
 
         let newUrlsFound = false;
@@ -523,17 +602,18 @@ export async function collectUrlsForCompany(page, options = {}) {
 
         if (pagesWithNoNewUrls >= patienceLimit) {
             console.log(`\nStopping: Reached patience limit of ${patienceLimit} pages with no new URLs.`);
-            break;
+            return { status: 'FINISHED', reason: 'PATIENCE_LIMIT', lastPage: currentPage };
         }
 
         const currentUrl = page.url();
         if (currentPage > 1 && !currentUrl.includes(`page=${currentPage}`)) {
             console.log("Redirected away from requested page. Assuming end of pagination.");
-            break;
+            return { status: 'FINISHED', reason: 'REDIRECTED', lastPage: currentPage };
         }
 
         currentPage++;
-        const delay = Math.floor(Math.random() * 3000) + 3000;
+        const delay = 5000 + Math.random() * 10000; // Increased delay: 5-15s
+        console.log(`   ⏳ Waiting ${Math.round(delay / 1000)}s...`);
         await page.waitForTimeout(delay);
     }
 
@@ -543,6 +623,8 @@ export async function collectUrlsForCompany(page, options = {}) {
 
     console.log(`Finished. Total unique URLs in file: ${seenInFile.size}`);
     console.log(`Finished. Unique URLs found in this run: ${seenInThisRun.size}`);
+
+    return { status: 'FINISHED', reason: 'COMPLETED', lastPage: currentPage, count: seenInThisRun.size };
 }
 
 async function main() {
@@ -569,7 +651,7 @@ async function main() {
         '--window-size=1280,800',
     ];
 
-    const useProfile = args.includes("--use-profile") || shouldLogin || shouldManualLogin;
+    const useProfile = args.includes("--use-profile");
 
     console.log(`🚀 Launching Robust Scraper.`);
     console.log(`🎯 Target URL: ${COMPANY_POSTS_URL}`);

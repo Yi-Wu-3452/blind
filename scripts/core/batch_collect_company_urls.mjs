@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { chromium } from "playwright-extra";
+import stealth from "puppeteer-extra-plugin-stealth";
 import { collectUrlsForCompany, login } from "./collect_company_urls_robust.mjs";
 import { setActiveLogFile } from "./logger.mjs";
 
@@ -15,9 +16,16 @@ const args = process.argv.slice(2);
 const companyListArg = args.find(arg => arg.startsWith("--company-list=") || arg.startsWith("--company_list="))?.split("=")[1];
 const COMPANY_LIST_PATH = companyListArg ? path.resolve(ROOT_DIR, companyListArg) : path.resolve(ROOT_DIR, "company_list.json");
 
+const useStealth = args.includes("--use-stealth");
+if (useStealth) {
+    chromium.use(stealth());
+}
+
 const limit = parseInt(args.find(arg => arg.startsWith("--limit="))?.split("=")[1] || "1000");
 const reverse = args.includes("--reverse");
 const force = args.includes("--force");
+
+const sortArg = args.find(arg => arg.startsWith("--sort="))?.split("=")[1];
 
 const noRecent = args.includes("--no-recent") || args.includes("--no_recent");
 const useRobustScroll = args.includes("--robust-scroll") || args.includes("--robust_scroll");
@@ -25,6 +33,8 @@ const scrollInterval = parseInt(args.find(arg => arg.startsWith("--scroll-interv
 const scrollLimit = parseInt(args.find(arg => arg.startsWith("--scroll-limit=") || arg.startsWith("--scroll_limit="))?.split("=")[1] || "20");
 const startFrom = args.find(arg => arg.startsWith("--start-from="))?.split("=")[1];
 const account = args.find(arg => arg.startsWith("--account="))?.split("=")[1];
+const isolate = args.includes("--isolate");
+const rotateAccounts = args.includes("--rotate-accounts");
 
 const proxyArgIndex = process.argv.indexOf('--proxy');
 let proxyConfig = undefined;
@@ -60,34 +70,53 @@ async function runBatch() {
     }
     console.log(`📋 Loaded ${companies.length} companies from list.`);
 
-    // Launch single browser instance
-    console.log("🚀 Launching single browser instance for batch processing...");
-    const browser = await chromium.launch({
-        headless: false, // Per user preference for reliability
-        proxy: proxyConfig,
-        args: [
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--window-position=0,0',
-            '--ignore-certificate-errors',
-            '--ignore-certificate-errors-spki-list',
-            '--window-size=1280,800',
-        ]
-    });
+    let currentAccount = account || "1";
+    let browser = null;
+    let context = null;
+    let page = null;
 
-    const context = await browser.newContext({
-        viewport: { width: 1280, height: 800 }
-    });
-    const page = await context.newPage();
+    const launchBrowser = async () => {
+        if (browser) {
+            console.log("🧹 Closing previous browser instance...");
+            await browser.close().catch(() => { });
+        }
+        console.log(`🚀 Launching browser instance (Account: ${currentAccount})...`);
+        browser = await chromium.launch({
+            headless: false,
+            proxy: proxyConfig,
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--window-position=0,0',
+                '--ignore-certificate-errors',
+                '--ignore-certificate-errors-spki-list',
+                '--window-size=1280,800',
+            ]
+        });
+        context = await browser.newContext({
+            viewport: { width: 1280, height: 800 }
+        });
+        page = await context.newPage();
 
-    console.log(`🔑 Logging in with account "${account || 'default'}" before starting batch processing...`);
-    await login(page, { manual: false, account });
+        if (!isolate) {
+            console.log(`🔑 Logging in with account "${currentAccount}"...`);
+            await login(page, { manual: false, account: currentAccount });
+        }
+    };
+
+    await launchBrowser();
 
     let processedCount = 0;
     let skipCount = 0;
     let foundStart = !startFrom;
 
-    for (const company of companies) {
+    const credentials = fs.existsSync(path.resolve(ROOT_DIR, "credentials.json"))
+        ? JSON.parse(fs.readFileSync(path.resolve(ROOT_DIR, "credentials.json"), "utf-8"))
+        : {};
+    const accountKeys = Object.keys(credentials).sort();
+
+    for (let cIdx = 0; cIdx < companies.length; cIdx++) {
+        const company = companies[cIdx];
         if (limit > 0 && processedCount >= limit) {
             console.log(`\n🛑 Limit of ${limit} companies reached. Stopping.`);
             break;
@@ -96,6 +125,10 @@ async function runBatch() {
         const companyName = company["Company Name"];
         const symbol = company.Symbol;
         const postUrl = company["Post URL"];
+
+        if (rotateAccounts && accountKeys.length > 0) {
+            currentAccount = accountKeys[cIdx % accountKeys.length];
+        }
 
         if (!postUrl) {
             console.warn(`⚠️ Skipping ${companyName}: No Blind URL found.`);
@@ -128,19 +161,22 @@ async function runBatch() {
         const postCount = parseInt(company["# Posts"] || "0");
         const isLarge = postCount > 10000;
 
-        const runs = [];
-        if (!noRecent) {
+        let runs = [];
+        if (sortArg === "top") {
+            runs.push({ sort: null, suffix: "_top", stateKey: "top" });
+        } else if (sortArg === "recent") {
             runs.push({ sort: "recent", suffix: "_recent", stateKey: "recent" });
-        }
-
-        if (isLarge) {
+        } else if (sortArg === "all") {
+            runs.push({ sort: "recent", suffix: "_recent", stateKey: "recent" });
             runs.push({ sort: null, suffix: "", stateKey: "all" });
+        } else {
+            if (!noRecent) runs.push({ sort: "recent", suffix: "_recent", stateKey: "recent" });
+            if (isLarge) runs.push({ sort: null, suffix: "", stateKey: "all" });
         }
 
         let anyRunPerformed = false;
         for (const run of runs) {
             const outFile = path.join(companyDir, `${safeName}${run.suffix}.json`);
-
             const isAlreadyScraped = scrapeState[run.stateKey] === true;
 
             if ((isAlreadyScraped || fs.existsSync(outFile)) && !force) {
@@ -148,56 +184,92 @@ async function runBatch() {
                 continue;
             }
 
-            console.log(`\n▶️  [${processedCount + 1}/${companies.length}] Processing: ${companyName} (${symbol}) - Sort: ${run.sort || "default"}`);
-            // Set active log file for this specific run (e.g., recent vs all)
-            const logFileName = `log${run.suffix}.txt`;
-            setActiveLogFile(path.join(companyDir, logFileName));
+            let attempt = 0;
+            const maxAttempts = accountKeys.length;
+            let runSuccess = false;
 
-            console.log(`   🔗 URL: ${postUrl}`);
-            console.log(`   📂 Out: ${path.join("company_post_urls", safeName, path.basename(outFile))}`);
+            while (attempt < maxAttempts && !runSuccess) {
+                console.log(`\n▶️  [${processedCount + 1}/${companies.length}] Processing: ${companyName} (${symbol}) - Sort: ${run.sort || "default"} (Attempt ${attempt + 1})`);
+                const logFileName = `log${run.suffix}.txt`;
+                setActiveLogFile(path.join(companyDir, logFileName));
 
-            try {
-                let targetUrl = postUrl;
-                if (run.sort) {
-                    targetUrl += targetUrl.includes("?") ? `&sort=${run.sort}` : `?sort=${run.sort}`;
+                try {
+                    let targetUrl = postUrl;
+                    if (run.sort) {
+                        targetUrl += targetUrl.includes("?") ? `&sort=${run.sort}` : `?sort=${run.sort}`;
+                    }
+
+                    anyRunPerformed = true;
+
+                    if (isolate || attempt > 0) {
+                        console.log(`🛡️  Isolation/Rotation: Refreshing browser for ${companyName}...`);
+                        await launchBrowser();
+                        if (isolate) {
+                            console.log(`   🔑 Logging in for ${companyName} with account ${currentAccount}...`);
+                            await login(page, { manual: false, account: currentAccount });
+                        }
+                    }
+
+                    const result = await collectUrlsForCompany(page, {
+                        targetUrl,
+                        outFile,
+                        scrollCount: 3,
+                        useSimpleRetry: false,
+                        useRobustScroll,
+                        scrollInterval,
+                        scrollLimit
+                    });
+
+                    if (result && result.status === 'BLOCKED') {
+                        console.log(`   🚨 BLOCKED detected: ${result.reason}.`);
+                        attempt++;
+                        if (attempt < maxAttempts) {
+                            const nextAccIndex = (accountKeys.indexOf(currentAccount) + 1) % accountKeys.length;
+                            currentAccount = accountKeys[nextAccIndex];
+                            console.log(`   🔄 Rotating to next account: ${currentAccount}`);
+                            // Wait a bit before retry
+                            await sleep(10000);
+                            continue;
+                        } else {
+                            console.error(`   ❌ All accounts blocked for ${companyName}. Skipping.`);
+                            break;
+                        }
+                    }
+
+                    runSuccess = true;
+                    scrapeState[run.stateKey] = true;
+                    fs.writeFileSync(stateFile, JSON.stringify(scrapeState, null, 2));
+                    console.log(`   ✅ Finished ${companyName} (${run.sort || "default"} sort)`);
+                } catch (error) {
+                    console.error(`   ❌ Error processing ${companyName}: ${error.message}`);
+                    attempt++;
+                    if (attempt < maxAttempts) {
+                        await launchBrowser();
+                        continue;
+                    }
+                    throw error;
                 }
-
-                anyRunPerformed = true;
-                await collectUrlsForCompany(page, {
-                    targetUrl,
-                    outFile,
-                    scrollCount: 3,
-                    useSimpleRetry: false,
-                    useRobustScroll,
-                    scrollInterval,
-                    scrollLimit
-                });
-
-                scrapeState[run.stateKey] = true;
-                fs.writeFileSync(stateFile, JSON.stringify(scrapeState, null, 2));
-
-                console.log(`   ✅ Finished ${companyName} (${run.sort || "default"} sort)`);
-            } catch (error) {
-                console.error(`   ❌ Failed to process ${companyName} (${run.sort || "default"} sort): ${error.message}`);
-                throw error;
             }
 
-            // Cooldown between runs
-            const cooldown = 3000 + Math.random() * 3000;
+            const cooldown = 5000 + Math.random() * 5000;
             console.log(`   ⏳ Cooldown for ${Math.round(cooldown / 1000)}s...`);
-            await new Promise(r => setTimeout(r, cooldown));
+            await sleep(cooldown);
         }
 
         if (anyRunPerformed) processedCount++;
+
+        if (isolate && processedCount < companies.length) {
+            const companyDelay = 15000 + Math.random() * 15000;
+            console.log(`\n🛡️  Isolation Delay: Waiting ${Math.round(companyDelay / 1000)}s next company...`);
+            await sleep(companyDelay);
+        }
     }
 
     console.log(`\n🏁 Batch process finished. Total processed: ${processedCount}.`);
-    if (skipCount > 0) {
-        console.log(`⏭️  Skipped ${skipCount} companies before reaching "${startFrom}".`);
-    }
-    await context.close();
-    await browser.close();
+    if (browser) await browser.close();
 }
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 runBatch().catch(async (err) => {
     console.error(`\n❌ Fatal error in batch process:`, err);
