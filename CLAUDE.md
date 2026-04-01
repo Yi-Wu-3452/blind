@@ -22,7 +22,7 @@ node scripts/core/batch_collect_mega_company_tags.mjs --company=Broadcom
 
 ### Post Extraction (Phase 2)
 ```bash
-node scripts/core/extract_post_details_v2.mjs --company-list=company_list.json --auto-login
+node scripts/core/extract_post_details.mjs --company-list=company_list.json --auto-login
 ```
 
 ### Aggregation & Packaging (Phases 3–4)
@@ -69,7 +69,7 @@ URL Collection → Post Extraction → Aggregation → ZIP Packaging
 |--------|------|
 | `scripts/core/collect_company_urls_robust.mjs` | Single-company URL collection with scroll detection and retry |
 | `scripts/core/batch_collect_company_urls.mjs` | Batch URL collection with account rotation |
-| `scripts/core/extract_post_details_v2.mjs` | Primary post+comment extractor (~82KB); handles polls, offers, images, nested replies |
+| `scripts/core/extract_post_details.mjs` | Primary post+comment extractor (~82KB); handles polls, offers, images, nested replies |
 | `scripts/core/aggregate_company_posts.mjs` | Merges per-post JSONs into one `aggregated_posts.json` |
 | `scripts/core/zip_company_data.mjs` | Packages company data into ZIP archives |
 | `scripts/core/logger.mjs` | Timestamped console+file logger, imported by all scripts |

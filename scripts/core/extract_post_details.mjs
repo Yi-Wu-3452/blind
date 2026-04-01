@@ -1581,15 +1581,26 @@ async function startScraping() {
             const batchInFile = path.join(companyBaseDir, `${safeName}_recent.json`);
             currentOutDir = path.resolve(__dirname, "../../data/company_posts", safeName);
 
+            const batchTopFile = path.join(companyBaseDir, `${safeName}_top.json`);
+
             console.log(`\n🏢 Processing Company: ${companyName} (${company.Symbol})`);
-            if (fs.existsSync(batchInFile)) {
-                const data = JSON.parse(fs.readFileSync(batchInFile, "utf-8"));
-                urls = data.map(item => item.url).filter(u => u);
-                console.log(`   🔗 Loaded ${urls.length} URLs from ${path.basename(batchInFile)}`);
-            } else {
-                console.warn(`   ⚠️ URL file not found: ${batchInFile}. Skipping.`);
+            const urlSet = new Set();
+            let anyFileFound = false;
+            for (const urlFile of [batchInFile, batchTopFile]) {
+                if (fs.existsSync(urlFile)) {
+                    const data = JSON.parse(fs.readFileSync(urlFile, "utf-8"));
+                    const fileUrls = data.map(item => item.url).filter(u => u);
+                    const before = urlSet.size;
+                    fileUrls.forEach(u => urlSet.add(u));
+                    console.log(`   🔗 Loaded ${fileUrls.length} URLs from ${path.basename(urlFile)} (${urlSet.size - before} new)`);
+                    anyFileFound = true;
+                }
+            }
+            if (!anyFileFound) {
+                console.warn(`   ⚠️ No URL files found in ${companyBaseDir}. Skipping.`);
                 continue;
             }
+            urls = Array.from(urlSet);
         }
 
         if (useReverse) {
@@ -1742,7 +1753,7 @@ async function startScraping() {
 
 export { extractPostData, startScraping, dismissBlockers, downloadAllImages, login };
 
-const isMain = process.argv[1].endsWith('extract_post_details_v2.mjs');
+const isMain = process.argv[1].endsWith('extract_post_details.mjs');
 if (isMain) {
     startScraping().catch(console.error);
 }

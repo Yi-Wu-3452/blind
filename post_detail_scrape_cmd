@@ -1,1 +1,1 @@
-caffeinate -d node scripts/core/extract_post_details_v2.mjs --company-list=company_list_100_to_1000.json --auto-login --account 2 --proxy socks5://127.0.0.1:18080 --delay=3000
+caffeinate -d node scripts/core/extract_post_details.mjs --company-list=company_list_100_to_1000.json --auto-login --account 2 --proxy socks5://127.0.0.1:18080 --delay=3000
