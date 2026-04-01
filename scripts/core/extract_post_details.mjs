@@ -5,14 +5,10 @@ import path from "path";
 import https from "https";
 import { fileURLToPath } from "url";
 
-// Apply stealth plugin ONLY if login is not required
-const isLoginActive = process.argv.includes('--login') ||
-    process.argv.includes('--manual-login') ||
-    process.argv.includes('--login-wait') ||
-    process.argv.includes('--auto-login');
 const usePrevRetry = process.argv.includes('--prev-retry');
 
-if (!isLoginActive) {
+// Stealth is opt-in only
+if (process.argv.includes('--use-stealth')) {
     chromium.use(stealth());
 }
 
@@ -1449,9 +1445,14 @@ async function startScraping() {
     const useLogin = process.argv.includes('--login');
     const useManualLogin = process.argv.includes('--manual-login');
     const useLoginWait = process.argv.includes('--login-wait');
-    const useAutoLogin = process.argv.includes('--auto-login');
+    const useAutoLogin = !useLogin && !useManualLogin && !useLoginWait; // default on
     const useReverse = process.argv.includes('--reverse');
     const usePrevRetry = process.argv.includes('--prev-retry');
+
+    if (accArgIndex === -1) {
+        console.error('❌ --account <number> is required. E.g. --account 1');
+        process.exit(1);
+    }
 
     let companies = [];
     if (COMPANY_LIST_PATH && fs.existsSync(COMPANY_LIST_PATH)) {

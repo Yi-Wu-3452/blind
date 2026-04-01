@@ -4,12 +4,14 @@
  * Interactive picker: shows remaining companies, lets you select which to scrape.
  *
  * Usage:
- *   node scripts/pick_and_scrape.mjs [options]
+ *   node scripts/pick_and_scrape.mjs --account <number> [options]
+ *
+ * Required:
+ *   --account <number>      Account number from credentials.json (e.g. --account 1)
  *
  * Options (passed through to the extractor):
- *   --auto-login            Auto-login with credentials.json
- *   --account 2             Use account #2 from credentials.json
  *   --proxy socks5://...    Route through proxy
+ *   --use-stealth           Enable stealth plugin
  *   --dry-run               Show selection without scraping
  */
 
@@ -82,8 +84,15 @@ function ask(rl, question) {
 
 // --- main ---
 
-const passthroughArgs = process.argv.slice(2).filter(a => a !== '--dry-run').join(' ');
 const isDryRun = process.argv.includes('--dry-run');
+const accIdx = process.argv.indexOf('--account');
+
+if (accIdx === -1 && !isDryRun) {
+    console.error('❌ --account <number> is required. E.g. --account 1');
+    process.exit(1);
+}
+
+const passthroughArgs = process.argv.slice(2).filter(a => a !== '--dry-run').join(' ');
 
 console.log('\n🔍 Loading company progress...\n');
 const all = loadAllCompanies();
