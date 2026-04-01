@@ -36,16 +36,22 @@ function getCollectionProgress(company) {
     const safe = safeName(company['Company Name']);
     const tagsDir = path.join(urlDir, safe, 'tags');
     const totalTags = (company.Tags || []).length;
-    // Each tag has recent + top = 2 files expected
     const expectedFiles = totalTags * 2;
 
     let collectedFiles = 0;
+    const urlSet = new Set();
     if (fs.existsSync(tagsDir)) {
-        collectedFiles = fs.readdirSync(tagsDir)
-            .filter(f => f.endsWith('.json') && !f.includes('_duplicates')).length;
+        for (const f of fs.readdirSync(tagsDir)) {
+            if (!f.endsWith('.json') || f.includes('_duplicates')) continue;
+            collectedFiles++;
+            try {
+                const data = JSON.parse(fs.readFileSync(path.join(tagsDir, f), 'utf8'));
+                data.forEach(item => item.url && urlSet.add(item.url));
+            } catch { }
+        }
     }
 
-    return { collected: collectedFiles, total: expectedFiles, totalTags };
+    return { collected: collectedFiles, total: expectedFiles, totalTags, collectedUrls: urlSet.size, estimatedPosts: company['# Posts'] || 0 };
 }
 
 function ask(rl, question) {
@@ -66,9 +72,9 @@ if (!fs.existsSync(tagsListPath)) {
 console.log('\n🔍 Loading mega company URL collection progress...\n');
 const companies = JSON.parse(fs.readFileSync(tagsListPath, 'utf8'));
 const all = companies.map(c => {
-    const { collected, total, totalTags } = getCollectionProgress(c);
+    const { collected, total, totalTags, collectedUrls, estimatedPosts } = getCollectionProgress(c);
     const pct = total > 0 ? collected / total : 0;
-    return { ...c, collected, total, totalTags, pct };
+    return { ...c, collected, total, totalTags, collectedUrls, estimatedPosts, pct };
 });
 
 const remaining = all.filter(c => c.pct < 0.95);
@@ -78,7 +84,7 @@ console.log(`✅ Done (≥95%): ${done.length}   ⏳ Remaining: ${remaining.leng
 
 if (done.length > 0) {
     console.log('✅ Already done:\n');
-    done.forEach(c => console.log(`      • ${c['Company Name']} (${c.collected} / ${c.total} tag files)`));
+    done.forEach(c => console.log(`      • ${c['Company Name']} (${c.collected}/${c.total} tag files, ${c.collectedUrls.toLocaleString()}/${c.estimatedPosts.toLocaleString()} posts)`));
     console.log();
 }
 
@@ -88,7 +94,7 @@ remaining.forEach((c, i) => {
     const bar = c.total > 0
         ? '[' + '█'.repeat(Math.round(c.pct * 10)) + '░'.repeat(10 - Math.round(c.pct * 10)) + ']'
         : '[----------]';
-    console.log(`  ${String(i + 1).padStart(2)}. ${bar} ${pctStr.padStart(11)}  ${c['Company Name']} (${c.collected} / ${c.total} tag files, ${c.totalTags} tags)`);
+    console.log(`  ${String(i + 1).padStart(2)}. ${bar} ${pctStr.padStart(11)}  ${c['Company Name']} (${c.collected}/${c.total} tag files, ${c.collectedUrls.toLocaleString()}/${c.estimatedPosts.toLocaleString()} posts)`);
 });
 
 console.log('\nEnter company numbers to collect (e.g. 1,3,5-8 or "all"):');
