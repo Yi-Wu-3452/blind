@@ -3,6 +3,8 @@ node_modules/
 
 # Temp files
 .temp/
+.temp_scrape_list_*.json
+.claude/worktrees/
 
 # Logs
 logs
