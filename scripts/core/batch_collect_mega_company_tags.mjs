@@ -64,7 +64,7 @@ async function runBatchTags() {
     });
     const page = await context.newPage();
 
-    if (!args.includes("--no-login")) {
+    if (args.includes("--login") || args.includes("--auto-login")) {
         console.log("🔑 Logging in...");
         await login(page, { automatic: true });
     }
