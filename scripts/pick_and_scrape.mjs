@@ -26,8 +26,6 @@ const root = path.resolve(__dirname, '..');
 
 const REGULAR_LISTS = [
     'company_list_1000_to_10K.json',
-    'company_list_100_to_1000.json',
-    'company_list_under_100.json',
 ];
 
 const urlDir = path.join(root, 'data/company_post_urls');
