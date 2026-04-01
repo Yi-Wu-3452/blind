@@ -23,8 +23,7 @@ bash setup.sh
 `setup.sh` will:
 1. Check your Node.js version
 2. Install npm dependencies
-3. Create `credentials.json` from the example template
-4. Install Playwright's Chromium browser
+3. Install Playwright's Chromium browser
 
 Then **edit `credentials.json`** with your TeamBlind account credentials:
 
