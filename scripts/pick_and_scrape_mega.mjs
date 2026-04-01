@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 /**
- * pick_and_scrape.mjs
- * Interactive picker: shows remaining companies, lets you select which to scrape.
+ * pick_and_scrape_mega.mjs
+ * Interactive picker for mega companies (10k+ posts).
+ * URLs are read from tags/ subdirectory per company.
  *
  * Usage:
- *   node scripts/pick_and_scrape.mjs --account <number> [options]
+ *   node scripts/pick_and_scrape_mega.mjs --account <number> [options]
  *
  * Required:
  *   --account <number>      Account number from credentials.json (e.g. --account 1)
@@ -24,11 +25,7 @@ import { execSync } from 'child_process';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
 
-const REGULAR_LISTS = [
-    'company_list_1000_to_10K.json',
-    'company_list_100_to_1000.json',
-    'company_list_under_100.json',
-];
+const MEGA_LIST = 'company_list_over_10k.json';
 
 const urlDir = path.join(root, 'data/company_post_urls');
 const dataDir = path.join(root, 'data/company_posts');
@@ -45,14 +42,26 @@ function getProgress(name) {
     const companyPostDir = path.join(dataDir, safe);
 
     const urlSet = new Set();
-    for (const suffix of ['_recent.json', '_top.json']) {
-        const p = path.join(companyUrlDir, `${safe}${suffix}`);
-        if (fs.existsSync(p)) {
+
+    // Read from tags/ subdirectory
+    const tagsDir = path.join(companyUrlDir, 'tags');
+    if (fs.existsSync(tagsDir)) {
+        for (const f of fs.readdirSync(tagsDir)) {
+            if (!f.endsWith('.json') || f.includes('_duplicates')) continue;
             try {
-                const data = JSON.parse(fs.readFileSync(p, 'utf8'));
+                const data = JSON.parse(fs.readFileSync(path.join(tagsDir, f), 'utf8'));
                 data.forEach(item => item.url && urlSet.add(item.url));
             } catch { }
         }
+    }
+
+    // Also check root-level <safe>.json
+    const rootJson = path.join(companyUrlDir, `${safe}.json`);
+    if (fs.existsSync(rootJson)) {
+        try {
+            const data = JSON.parse(fs.readFileSync(rootJson, 'utf8'));
+            data.forEach(item => item.url && urlSet.add(item.url));
+        } catch { }
     }
 
     let done = 0;
@@ -63,25 +72,9 @@ function getProgress(name) {
     return { total: urlSet.size, done };
 }
 
-function loadAllCompanies() {
-    const all = [];
-    for (const listFile of REGULAR_LISTS) {
-        const p = path.join(root, listFile);
-        if (!fs.existsSync(p)) continue;
-        const companies = JSON.parse(fs.readFileSync(p, 'utf8'));
-        for (const c of companies) {
-            const { total, done } = getProgress(c['Company Name']);
-            const pct = total > 0 ? done / total : 0;
-            all.push({ ...c, total, done, pct, listFile });
-        }
-    }
-    return all;
-}
-
 function ask(rl, question) {
     return new Promise(resolve => rl.question(question, resolve));
 }
-
 
 // --- main ---
 
@@ -95,19 +88,31 @@ if (accIdx === -1 && !isDryRun) {
 
 const passthroughArgs = process.argv.slice(2).filter(a => a !== '--dry-run').join(' ');
 
-console.log('\n🔍 Loading company progress...\n');
-const all = loadAllCompanies();
+const megaPath = path.join(root, MEGA_LIST);
+if (!fs.existsSync(megaPath)) {
+    console.error(`❌ ${MEGA_LIST} not found.`);
+    process.exit(1);
+}
+
+console.log('\n🔍 Loading mega company progress...\n');
+const companies = JSON.parse(fs.readFileSync(megaPath, 'utf8'));
+const all = companies.map(c => {
+    const { total, done } = getProgress(c['Company Name']);
+    const pct = total > 0 ? done / total : 0;
+    return { ...c, total, done, pct };
+});
+
 const remaining = all.filter(c => c.pct < 0.95);
 const done = all.filter(c => c.pct >= 0.95);
 
 console.log(`✅ Done (≥95%): ${done.length}   ⏳ Remaining: ${remaining.length}\n`);
-console.log('Companies left to scrape:\n');
+console.log('Mega companies left to scrape:\n');
 remaining.forEach((c, i) => {
     const pctStr = c.total > 0 ? `${((c.done / c.total) * 100).toFixed(0)}%` : 'no URLs';
     const bar = c.total > 0
         ? '[' + '█'.repeat(Math.round(c.pct * 10)) + '░'.repeat(10 - Math.round(c.pct * 10)) + ']'
         : '[----------]';
-    console.log(`  ${String(i + 1).padStart(2)}. ${bar} ${pctStr.padStart(4)}  ${c['Company Name']} (${c.done}/${c.total})`);
+    console.log(`  ${String(i + 1).padStart(2)}. ${bar} ${pctStr.padStart(4)}  ${c['Company Name']} (${c.done}/${c.total}) — ${c['# Posts'].toLocaleString()} posts`);
 });
 
 console.log('\nEnter company numbers to scrape (e.g. 1,3,5-8 or "all"):');
@@ -143,7 +148,7 @@ if (selected.length === 0) {
 }
 
 console.log(`\n📋 Selected ${selected.length} companies:`);
-selected.forEach(c => console.log(`   • ${c['Company Name']}${c.isMega ? ' 🔥' : ''} (${c.done}/${c.total})`));
+selected.forEach(c => console.log(`   • ${c['Company Name']} (${c.done}/${c.total})`));
 
 if (isDryRun) {
     console.log('\n[dry-run] Would run extractor on the above companies.');
@@ -153,23 +158,14 @@ if (isDryRun) {
 const tempDir = path.join(root, '.temp');
 if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
 
-// Group by list file and run extractor per group
-const groups = {};
-for (const c of selected) {
-    if (!groups[c.listFile]) groups[c.listFile] = [];
-    groups[c.listFile].push(c);
-}
+const tempList = path.join(tempDir, `scrape_list_mega_${Date.now()}.json`);
+fs.writeFileSync(tempList, JSON.stringify(selected, null, 2));
 
-for (const [listFile, companies] of Object.entries(groups)) {
-    const tempList = path.join(tempDir, `scrape_list_${Date.now()}.json`);
-    fs.writeFileSync(tempList, JSON.stringify(companies, null, 2));
+const cmd = `node scripts/core/extract_post_details.mjs --company-list=${tempList} ${passthroughArgs}`;
+console.log(`\n🚀 Running: ${cmd}\n`);
 
-    const cmd = `node scripts/core/extract_post_details.mjs --company-list=${tempList} ${passthroughArgs}`;
-    console.log(`\n🚀 Running: ${cmd}\n`);
-
-    try {
-        execSync(cmd, { stdio: 'inherit', cwd: root });
-    } finally {
-        fs.unlinkSync(tempList);
-    }
+try {
+    execSync(cmd, { stdio: 'inherit', cwd: root });
+} finally {
+    fs.unlinkSync(tempList);
 }

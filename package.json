@@ -4,6 +4,7 @@
   "main": "index.js",
   "scripts": {
     "pick": "node scripts/pick_and_scrape.mjs",
+    "pick:mega": "node scripts/pick_and_scrape_mega.mjs",
 
     "progress:1k": "node check_1k_10k_progress.mjs",
     "progress:100": "node scripts/check_100_1000_progress.mjs",
