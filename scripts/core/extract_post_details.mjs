@@ -1583,10 +1583,13 @@ async function startScraping() {
             currentOutDir = path.resolve(__dirname, "../../data/company_posts", safeName);
 
             const batchTopFile = path.join(companyBaseDir, `${safeName}_top.json`);
+            const tagsDir = path.join(companyBaseDir, "tags");
 
             console.log(`\n🏢 Processing Company: ${companyName} (${company.Symbol})`);
             const urlSet = new Set();
             let anyFileFound = false;
+
+            // Regular files: _recent.json, _top.json
             for (const urlFile of [batchInFile, batchTopFile]) {
                 if (fs.existsSync(urlFile)) {
                     const data = JSON.parse(fs.readFileSync(urlFile, "utf-8"));
@@ -1597,6 +1600,20 @@ async function startScraping() {
                     anyFileFound = true;
                 }
             }
+
+            // Mega company: also read tags/ subdirectory
+            if (fs.existsSync(tagsDir)) {
+                const tagFiles = fs.readdirSync(tagsDir).filter(f => f.endsWith(".json") && !f.includes("_duplicates"));
+                for (const tf of tagFiles) {
+                    const data = JSON.parse(fs.readFileSync(path.join(tagsDir, tf), "utf-8"));
+                    const fileUrls = data.map(item => item.url).filter(u => u);
+                    const before = urlSet.size;
+                    fileUrls.forEach(u => urlSet.add(u));
+                    console.log(`   🔗 Loaded ${fileUrls.length} URLs from tags/${tf} (${urlSet.size - before} new)`);
+                    anyFileFound = true;
+                }
+            }
+
             if (!anyFileFound) {
                 console.warn(`   ⚠️ No URL files found in ${companyBaseDir}. Skipping.`);
                 continue;
