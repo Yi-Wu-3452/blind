@@ -158,7 +158,9 @@ for (const c of selected) {
 
 for (const [listFile, companies] of Object.entries(groups)) {
     // Write a temp company list
-    const tempList = path.join(root, `.temp_scrape_list_${Date.now()}.json`);
+    const tempDir = path.join(root, '.temp');
+    if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
+    const tempList = path.join(tempDir, `scrape_list_${Date.now()}.json`);
     fs.writeFileSync(tempList, JSON.stringify(companies, null, 2));
 
     const cmd = `node scripts/core/extract_post_details.mjs --company-list=${tempList} ${passthroughArgs}`;

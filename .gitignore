@@ -1,6 +1,9 @@
 # Dependencies
 node_modules/
 
+# Temp files
+.temp/
+
 # Logs
 logs
 *.log
