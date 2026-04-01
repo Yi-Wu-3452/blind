@@ -64,8 +64,10 @@ async function runBatchTags() {
     });
     const page = await context.newPage();
 
-    console.log("🔑 Logging in...");
-    await login(page, { manual: false });
+    if (!args.includes("--no-login")) {
+        console.log("🔑 Logging in...");
+        await login(page, { automatic: true });
+    }
 
     for (const company of companies) {
         const companyName = company["Company Name"];
