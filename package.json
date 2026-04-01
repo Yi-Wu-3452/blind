@@ -3,7 +3,23 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "pick": "node scripts/pick_and_scrape.mjs",
+
+    "progress:1k": "node check_1k_10k_progress.mjs",
+    "progress:100": "node scripts/check_100_1000_progress.mjs",
+    "progress:missing": "node scripts/find_missing_urls.mjs",
+
+    "collect": "node scripts/core/collect_company_urls_robust.mjs",
+    "collect:batch": "node scripts/core/batch_collect_company_urls.mjs",
+    "collect:mega": "node scripts/core/batch_collect_mega_company_tags.mjs",
+
+    "extract": "node scripts/core/extract_post_details.mjs",
+    "extract:1k": "node scripts/core/extract_post_details.mjs --company-list=company_list_1000_to_10K.json --auto-login",
+    "extract:100": "node scripts/core/extract_post_details.mjs --company-list=company_list_100_to_1000.json --auto-login",
+    "extract:under100": "node scripts/core/extract_post_details.mjs --company-list=company_list_under_100.json --auto-login",
+
+    "aggregate": "node scripts/core/aggregate_company_posts.mjs",
+    "zip": "node scripts/core/zip_company_data.mjs --master --output=posts_all.zip"
   },
   "keywords": [],
   "author": "",
