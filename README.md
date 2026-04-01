@@ -34,7 +34,10 @@ Then **edit `credentials.json`** with your TeamBlind account credentials:
 }
 ```
 
-You need at least one account. Multiple accounts allow workload splitting.
+> **What is an "account"?**
+> Each entry is a TeamBlind login. The scraper uses these to authenticate and fetch post data.
+> The keys (`"1"`, `"2"`, ...) are account numbers you reference via `--account 1` or `--account 2` when running commands.
+> You only need one account to get started. Having multiple lets different collaborators scrape in parallel using different logins to avoid rate limits.
 
 ---
 

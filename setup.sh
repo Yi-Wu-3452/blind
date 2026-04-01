@@ -29,11 +29,18 @@ echo "📦 Installing dependencies..."
 npm install
 
 # Check credentials
+echo ""
 if [ ! -f credentials.json ]; then
-    echo ""
-    echo "⚠️  credentials.json not found. Please add your TeamBlind account details before running."
+    echo "⚠️  credentials.json not found."
+    echo "   Please edit credentials.json and fill in your TeamBlind login(s) before running."
 else
     echo "✅ credentials.json found."
+    echo ""
+    echo "   Make sure it contains your real TeamBlind account details, e.g.:"
+    echo '   {'
+    echo '     "1": { "email": "you@example.com", "password": "yourpassword" }'
+    echo '   }'
+    echo "   The key (\"1\", \"2\", etc.) is the account number you pass via --account 1."
 fi
 
 # Install Playwright browsers
