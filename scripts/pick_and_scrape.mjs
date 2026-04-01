@@ -99,13 +99,20 @@ const remaining = all.filter(c => c.pct < 0.95);
 const done = all.filter(c => c.pct >= 0.95);
 
 console.log(`✅ Done (≥95%): ${done.length}   ⏳ Remaining: ${remaining.length}\n`);
-console.log('Companies left to scrape:\n');
+
+if (done.length > 0) {
+    console.log('✅ Already done:\n');
+    done.forEach(c => console.log(`      • ${c['Company Name']} (${c.done.toLocaleString()} / ${c.total.toLocaleString()} posts)`));
+    console.log();
+}
+
+console.log('⏳ Companies left to scrape:\n');
 remaining.forEach((c, i) => {
     const pctStr = c.total > 0 ? `${((c.done / c.total) * 100).toFixed(0)}%` : 'no URLs';
     const bar = c.total > 0
         ? '[' + '█'.repeat(Math.round(c.pct * 10)) + '░'.repeat(10 - Math.round(c.pct * 10)) + ']'
         : '[----------]';
-    console.log(`  ${String(i + 1).padStart(2)}. ${bar} ${pctStr.padStart(4)}  ${c['Company Name']} (${c.done}/${c.total})`);
+    console.log(`  ${String(i + 1).padStart(2)}. ${bar} ${pctStr.padStart(4)}  ${c['Company Name']} (${c.done.toLocaleString()} / ${c.total.toLocaleString()} posts)`);
 });
 
 console.log('\nEnter company numbers to scrape (e.g. 1,3,5-8 or "all"):');

@@ -75,13 +75,20 @@ const remaining = all.filter(c => c.pct < 0.95);
 const done = all.filter(c => c.pct >= 0.95);
 
 console.log(`✅ Done (≥95%): ${done.length}   ⏳ Remaining: ${remaining.length}\n`);
-console.log('Mega companies left to collect URLs for:\n');
+
+if (done.length > 0) {
+    console.log('✅ Already done:\n');
+    done.forEach(c => console.log(`      • ${c['Company Name']} (${c.collected} / ${c.total} tag files)`));
+    console.log();
+}
+
+console.log('⏳ Mega companies left to collect URLs for:\n');
 remaining.forEach((c, i) => {
     const pctStr = c.total > 0 ? `${((c.pct) * 100).toFixed(0)}%` : 'not started';
     const bar = c.total > 0
         ? '[' + '█'.repeat(Math.round(c.pct * 10)) + '░'.repeat(10 - Math.round(c.pct * 10)) + ']'
         : '[----------]';
-    console.log(`  ${String(i + 1).padStart(2)}. ${bar} ${pctStr.padStart(11)}  ${c['Company Name']} (${c.collected}/${c.total} tag files, ${c.totalTags} tags)`);
+    console.log(`  ${String(i + 1).padStart(2)}. ${bar} ${pctStr.padStart(11)}  ${c['Company Name']} (${c.collected} / ${c.total} tag files, ${c.totalTags} tags)`);
 });
 
 console.log('\nEnter company numbers to collect (e.g. 1,3,5-8 or "all"):');
