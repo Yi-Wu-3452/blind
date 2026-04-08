@@ -31,16 +31,16 @@ npm install
 # Check credentials
 echo ""
 if [ ! -f credentials.json ]; then
-    echo "⚠️  credentials.json not found."
-    echo "   Please edit credentials.json and fill in your TeamBlind login(s) before running."
+    echo "⚠️  credentials.json not found. Creating a template for you..."
+    cat > credentials.json << 'CREDS'
+{
+  "1": { "email": "your_email@example.com", "password": "your_password" }
+}
+CREDS
+    echo "   ✏️  Please edit credentials.json and fill in your real TeamBlind login."
+    echo "   The key (\"1\", \"2\", etc.) is the account number used via --account 1."
 else
     echo "✅ credentials.json found."
-    echo ""
-    echo "   Make sure it contains your real TeamBlind account details, e.g.:"
-    echo '   {'
-    echo '     "1": { "email": "you@example.com", "password": "yourpassword" }'
-    echo '   }'
-    echo "   The key (\"1\", \"2\", etc.) is the account number you pass via --account 1."
 fi
 
 # Install Playwright browsers

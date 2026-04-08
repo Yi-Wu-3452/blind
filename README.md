@@ -25,7 +25,7 @@ bash setup.sh
 2. Install npm dependencies
 3. Install Playwright's Chromium browser
 
-Then **edit `credentials.json`** with your TeamBlind account credentials:
+`setup.sh` will auto-create a `credentials.json` template if one doesn't exist. Edit it with your real TeamBlind login:
 
 ```json
 {
