@@ -1,6 +1,9 @@
 # Dependencies
 node_modules/
 
+# Credentials
+credentials.json
+
 # Temp files
 .temp/
 .temp_scrape_list_*.json
@@ -38,3 +41,6 @@ browser_profile_collector_1771341849588
 
 # second account
 second_account.txt
+
+# Credentials
+credentials.json
