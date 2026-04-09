@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "pick:1k": "caffeinate -d node scripts/pick_and_scrape.mjs",
-    "pick:10k:collect": "caffeinate -d node scripts/pick_and_collect_mega.mjs",
-    "pick:10k": "caffeinate -d node scripts/pick_and_scrape_mega.mjs",
+    "pick:1k": "node scripts/run_awake.mjs node scripts/pick_and_scrape.mjs",
+    "pick:10k:collect": "node scripts/run_awake.mjs node scripts/pick_and_collect_mega.mjs",
+    "pick:10k": "node scripts/run_awake.mjs node scripts/pick_and_scrape_mega.mjs",
 
     "progress:1k": "node check_1k_10k_progress.mjs",
     "progress:100": "node scripts/check_100_1000_progress.mjs",
