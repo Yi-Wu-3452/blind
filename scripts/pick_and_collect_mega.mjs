@@ -61,7 +61,8 @@ function ask(rl, question) {
 // --- main ---
 
 const isDryRun = process.argv.includes('--dry-run');
-const passthroughArgs = process.argv.slice(2).filter(a => a !== '--dry-run').join(' ');
+const modeArg = process.argv.find(a => a.startsWith('--mode='))?.split('=')[1]?.toLowerCase();
+const passthroughArgs = process.argv.slice(2).filter(a => a !== '--dry-run' && !a.startsWith('--mode=')).join(' ');
 
 const tagsListPath = path.join(root, TAGS_LIST);
 if (!fs.existsSync(tagsListPath)) {
@@ -101,7 +102,6 @@ console.log('\nEnter company numbers to collect (e.g. 1,3,5-8 or "all"):');
 
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 const input = await ask(rl, '> ');
-rl.close();
 
 // Parse selection
 let selected = [];
@@ -125,9 +125,28 @@ if (input.trim().toLowerCase() === 'all') {
 }
 
 if (selected.length === 0) {
+    rl.close();
     console.log('\n⚠️  No companies selected. Exiting.');
     process.exit(0);
 }
+
+let mode;
+if (modeArg) {
+    rl.close();
+    mode = modeArg;
+} else {
+    console.log('\nCollection mode:');
+    console.log('  t) Tags only       (default)');
+    console.log('  r) Recent only');
+    console.log('  p) Top only');
+    console.log('  a) All  (tags + recent + top)');
+    const modeInput = await ask(rl, '> ');
+    rl.close();
+    mode = modeInput.trim().toLowerCase() || 't';
+}
+const doTags   = mode === 't' || mode === 'a';
+const doRecent = mode === 'r' || mode === 'a';
+const doTop    = mode === 'p' || mode === 'a';
 
 console.log(`\n📋 Selected ${selected.length} companies:`);
 selected.forEach(c => console.log(`   • ${c['Company Name']} (${c.collected}/${c.total} tag files)`));
@@ -137,9 +156,34 @@ if (isDryRun) {
     process.exit(0);
 }
 
-// Run collector per company
+function writeTempList(company) {
+    const tmpDir = fs.mkdtempSync('/tmp/blind-');
+    const tmpFile = path.join(tmpDir, 'list.json');
+    fs.writeFileSync(tmpFile, JSON.stringify([company]));
+    return tmpFile;
+}
+
+// Run collectors
 for (const c of selected) {
-    const cmd = `node scripts/core/batch_collect_mega_company_tags.mjs --company="${c['Company Name']}" ${passthroughArgs}`;
-    console.log(`\n🚀 Running: ${cmd}\n`);
-    execSync(cmd, { stdio: 'inherit', cwd: root });
+    const name = c['Company Name'];
+
+    if (doTags) {
+        const cmd = `node scripts/core/batch_collect_mega_company_tags.mjs --company="${name}" ${passthroughArgs}`;
+        console.log(`\n🚀 [tags]   ${cmd}\n`);
+        execSync(cmd, { stdio: 'inherit', cwd: root });
+    }
+
+    if (doRecent) {
+        const tmpFile = writeTempList(c);
+        const cmd = `node scripts/core/batch_collect_company_urls.mjs --company-list=${tmpFile} --sort=recent ${passthroughArgs}`;
+        console.log(`\n🚀 [recent] ${cmd}\n`);
+        execSync(cmd, { stdio: 'inherit', cwd: root });
+    }
+
+    if (doTop) {
+        const tmpFile = writeTempList(c);
+        const cmd = `node scripts/core/batch_collect_company_urls.mjs --company-list=${tmpFile} --sort=top ${passthroughArgs}`;
+        console.log(`\n🚀 [top]    ${cmd}\n`);
+        execSync(cmd, { stdio: 'inherit', cwd: root });
+    }
 }

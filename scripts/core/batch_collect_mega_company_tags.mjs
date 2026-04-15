@@ -128,35 +128,54 @@ async function runBatchTags() {
             }
         }
 
-        // Merge logic
-        console.log(`\n🔄 Merging tags for ${companyName}...`);
+        // Merge logic: tags/ files + _recent.json + _top.json + {safeName}.json
+        console.log(`\n🔄 Merging all URL sources for ${companyName}...`);
         const allUrls = new Map();
-        const tagFiles = fs.readdirSync(tagsDir).filter(f => f.endsWith(".json") && !f.includes("_merged"));
 
+        const addUrls = (items, source) => {
+            items.forEach(item => {
+                if (!item.url) return;
+                if (!allUrls.has(item.url)) {
+                    allUrls.set(item.url, { ...item, sources: [source] });
+                } else {
+                    allUrls.get(item.url).sources.push(source);
+                }
+            });
+        };
+
+        // Tag files from tags/ subdirectory
+        const tagFiles = fs.readdirSync(tagsDir).filter(f => f.endsWith(".json") && !f.includes("_merged") && !f.includes("_duplicates"));
         for (const file of tagFiles) {
             try {
                 const data = JSON.parse(fs.readFileSync(path.join(tagsDir, file), "utf-8"));
-                data.forEach(item => {
-                    if (item.url) {
-                        if (!allUrls.has(item.url)) {
-                            allUrls.set(item.url, {
-                                ...item,
-                                tags: [file.replace(".json", "")]
-                            });
-                        } else {
-                            allUrls.get(item.url).tags.push(file.replace(".json", ""));
-                        }
-                    }
-                });
+                addUrls(data, `tags/${file.replace(".json", "")}`);
             } catch (e) {
-                console.error(`Error reading ${file}: ${e.message}`);
+                console.error(`Error reading tags/${file}: ${e.message}`);
+            }
+        }
+
+        // Company-level URL files: _recent, _top, all-sort (no suffix)
+        const companySources = [
+            { file: path.join(companyDir, `${safeName}_recent.json`), source: "recent" },
+            { file: path.join(companyDir, `${safeName}_top.json`), source: "top" },
+            { file: path.join(companyDir, `${safeName}.json`), source: "all" },
+        ];
+        for (const { file, source } of companySources) {
+            if (fs.existsSync(file)) {
+                try {
+                    const data = JSON.parse(fs.readFileSync(file, "utf-8"));
+                    addUrls(data, source);
+                    console.log(`   + ${data.length} URLs from ${path.basename(file)}`);
+                } catch (e) {
+                    console.error(`Error reading ${path.basename(file)}: ${e.message}`);
+                }
             }
         }
 
         const mergedFile = path.join(companyDir, `${safeName}_tags_merged.json`);
         const mergedData = Array.from(allUrls.values());
         fs.writeFileSync(mergedFile, JSON.stringify(mergedData, null, 2));
-        console.log(`✅ Merged ${mergedData.length} unique URLs into ${mergedFile}`);
+        console.log(`✅ Merged ${mergedData.length} unique URLs into ${path.basename(mergedFile)}`);
     }
 
     await context.close();

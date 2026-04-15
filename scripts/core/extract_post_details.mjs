@@ -1583,14 +1583,16 @@ async function startScraping() {
             currentOutDir = path.resolve(__dirname, "../../data/company_posts", safeName);
 
             const batchTopFile = path.join(companyBaseDir, `${safeName}_top.json`);
+            const batchAllFile = path.join(companyBaseDir, `${safeName}.json`);
+            const batchTagsMergedFile = path.join(companyBaseDir, `${safeName}_tags_merged.json`);
             const tagsDir = path.join(companyBaseDir, "tags");
 
             console.log(`\n🏢 Processing Company: ${companyName} (${company.Symbol})`);
             const urlSet = new Set();
             let anyFileFound = false;
 
-            // Regular files: _recent.json, _top.json
-            for (const urlFile of [batchInFile, batchTopFile]) {
+            // Regular files: _recent.json, _top.json, .json (all-sort), _tags_merged.json
+            for (const urlFile of [batchInFile, batchTopFile, batchAllFile, batchTagsMergedFile]) {
                 if (fs.existsSync(urlFile)) {
                     const data = JSON.parse(fs.readFileSync(urlFile, "utf-8"));
                     const fileUrls = data.map(item => item.url).filter(u => u);
