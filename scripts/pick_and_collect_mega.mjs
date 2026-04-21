@@ -32,14 +32,19 @@ function safeName(name) {
     return name.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_');
 }
 
+const SKIP_FILES = ['state.json'];
+
 function getCollectionProgress(company) {
     const safe = safeName(company['Company Name']);
-    const tagsDir = path.join(urlDir, safe, 'tags');
+    const companyUrlDir = path.join(urlDir, safe);
+    const tagsDir = path.join(companyUrlDir, 'tags');
     const totalTags = (company.Tags || []).length;
     const expectedFiles = totalTags * 2;
 
     let collectedFiles = 0;
     const urlSet = new Set();
+
+    // Count tag files collected
     if (fs.existsSync(tagsDir)) {
         for (const f of fs.readdirSync(tagsDir)) {
             if (!f.endsWith('.json') || f.includes('_duplicates')) continue;

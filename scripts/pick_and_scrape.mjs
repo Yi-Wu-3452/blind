@@ -37,21 +37,40 @@ function safeName(name) {
     return name.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_');
 }
 
+const SKIP_FILES = ['state.json'];
+
+function collectUrls(companyUrlDir) {
+    const urlSet = new Set();
+    // Root-level json files
+    if (fs.existsSync(companyUrlDir)) {
+        for (const f of fs.readdirSync(companyUrlDir)) {
+            if (!f.endsWith('.json') || f.includes('_duplicates') || SKIP_FILES.includes(f)) continue;
+            try {
+                const data = JSON.parse(fs.readFileSync(path.join(companyUrlDir, f), 'utf8'));
+                data.forEach(item => item.url && urlSet.add(item.url));
+            } catch { }
+        }
+    }
+    // tags/ subdirectory
+    const tagsDir = path.join(companyUrlDir, 'tags');
+    if (fs.existsSync(tagsDir)) {
+        for (const f of fs.readdirSync(tagsDir)) {
+            if (!f.endsWith('.json') || f.includes('_duplicates')) continue;
+            try {
+                const data = JSON.parse(fs.readFileSync(path.join(tagsDir, f), 'utf8'));
+                data.forEach(item => item.url && urlSet.add(item.url));
+            } catch { }
+        }
+    }
+    return urlSet;
+}
+
 function getProgress(name) {
     const safe = safeName(name);
     const companyUrlDir = path.join(urlDir, safe);
     const companyPostDir = path.join(dataDir, safe);
 
-    const urlSet = new Set();
-    for (const suffix of ['_recent.json', '_top.json']) {
-        const p = path.join(companyUrlDir, `${safe}${suffix}`);
-        if (fs.existsSync(p)) {
-            try {
-                const data = JSON.parse(fs.readFileSync(p, 'utf8'));
-                data.forEach(item => item.url && urlSet.add(item.url));
-            } catch { }
-        }
-    }
+    const urlSet = collectUrls(companyUrlDir);
 
     let done = 0;
     if (fs.existsSync(companyPostDir)) {

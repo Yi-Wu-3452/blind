@@ -36,14 +36,21 @@ function safeName(name) {
     return name.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_');
 }
 
-function getProgress(name) {
-    const safe = safeName(name);
-    const companyUrlDir = path.join(urlDir, safe);
-    const companyPostDir = path.join(dataDir, safe);
+const SKIP_FILES = ['state.json'];
 
+function collectUrls(companyUrlDir) {
     const urlSet = new Set();
-
-    // Read from tags/ subdirectory
+    // Root-level json files
+    if (fs.existsSync(companyUrlDir)) {
+        for (const f of fs.readdirSync(companyUrlDir)) {
+            if (!f.endsWith('.json') || f.includes('_duplicates') || SKIP_FILES.includes(f)) continue;
+            try {
+                const data = JSON.parse(fs.readFileSync(path.join(companyUrlDir, f), 'utf8'));
+                data.forEach(item => item.url && urlSet.add(item.url));
+            } catch { }
+        }
+    }
+    // tags/ subdirectory
     const tagsDir = path.join(companyUrlDir, 'tags');
     if (fs.existsSync(tagsDir)) {
         for (const f of fs.readdirSync(tagsDir)) {
@@ -54,15 +61,15 @@ function getProgress(name) {
             } catch { }
         }
     }
+    return urlSet;
+}
 
-    // Also check root-level <safe>.json
-    const rootJson = path.join(companyUrlDir, `${safe}.json`);
-    if (fs.existsSync(rootJson)) {
-        try {
-            const data = JSON.parse(fs.readFileSync(rootJson, 'utf8'));
-            data.forEach(item => item.url && urlSet.add(item.url));
-        } catch { }
-    }
+function getProgress(name) {
+    const safe = safeName(name);
+    const companyUrlDir = path.join(urlDir, safe);
+    const companyPostDir = path.join(dataDir, safe);
+
+    const urlSet = collectUrls(companyUrlDir);
 
     let done = 0;
     if (fs.existsSync(companyPostDir)) {
